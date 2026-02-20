@@ -33,6 +33,13 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# server
+server/node_modules
+server/.env
+
+# claude
+.claude/
+
 # vercel
 .vercel
 
