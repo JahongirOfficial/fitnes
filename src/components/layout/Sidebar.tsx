@@ -83,10 +83,9 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         className={cn(
           "fixed left-0 top-0 h-screen bg-slate-900 text-white flex flex-col z-50 transition-all duration-300",
           // Desktop
-          "max-lg:translate-x-[-100%]",
           collapsed ? "lg:w-20" : "lg:w-72",
-          // Mobile - slide in
-          mobileOpen && "max-lg:translate-x-0 max-lg:w-72"
+          // Mobile - slide in/out
+          mobileOpen ? "max-lg:translate-x-0 max-lg:w-72" : "max-lg:translate-x-[-100%]"
         )}
       >
         {/* Logo */}
