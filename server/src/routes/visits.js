@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Visit from "../models/Visit.js";
 import Member from "../models/Member.js";
+import Debt from "../models/Debt.js";
+import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -48,7 +50,66 @@ router.post("/checkin", verifyToken, async (req, res) => {
     const member = await Member.findById(memberId);
     if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
 
-    if (member.status !== "active") {
+    // Obonement statusni endDate asosida qayta hisoblash
+    let isExpired = false;
+    let extraDays = 0;
+    let debtCreated = false;
+    let debtAmount = 0;
+
+    if (member.subscription && member.subscription.endDate) {
+      const endDate = new Date(member.subscription.endDate);
+      const now = new Date();
+      if (endDate < now) {
+        isExpired = true;
+        // Kunlarni hisoblash
+        extraDays = Math.ceil((now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+
+        // Kunlik tarif narxini olish
+        const settings = await Settings.findOne();
+        const dailyRate = settings?.pricing?.daily || 30000;
+        debtAmount = extraDays * dailyRate;
+
+        // Qarz yaratish yoki mavjudini yangilash
+        const existingDebt = await Debt.findOne({
+          memberId: member._id,
+          status: { $in: ["unpaid", "partial"] },
+          description: /muddati o'tgan/i,
+        });
+
+        if (existingDebt) {
+          // Mavjud qarzni yangilash (yangi summaga)
+          existingDebt.amount = debtAmount;
+          existingDebt.remainingAmount = debtAmount - existingDebt.paidAmount;
+          if (existingDebt.remainingAmount <= 0) {
+            existingDebt.remainingAmount = 0;
+            existingDebt.status = "paid";
+          } else {
+            existingDebt.status = existingDebt.paidAmount > 0 ? "partial" : "unpaid";
+          }
+          await existingDebt.save();
+        } else {
+          await new Debt({
+            memberId: member._id,
+            personName: member.fullName,
+            phone: member.phone,
+            amount: debtAmount,
+            remainingAmount: debtAmount,
+            description: `Abonement muddati o'tgan (${extraDays} kun)`,
+            createdBy: "Tizim",
+          }).save();
+        }
+        debtCreated = true;
+
+        // A'zo statusini expired qilish
+        await Member.findByIdAndUpdate(memberId, {
+          status: "expired",
+          "subscription.status": "expired",
+        });
+      }
+    }
+
+    // Obonement bo'lmagan a'zo (inactive) ni rad etish
+    if (member.status === "inactive" && !member.subscription) {
       return res.status(400).json({ message: "A'zo abonement faol emas" });
     }
 
@@ -72,7 +133,15 @@ router.post("/checkin", verifyToken, async (req, res) => {
     });
     await visit.save();
 
-    res.status(201).json(visit);
+    // Javobga qarz ma'lumotlarini qo'shish
+    const response = visit.toObject();
+    if (debtCreated) {
+      response.debtCreated = true;
+      response.debtAmount = debtAmount;
+      response.extraDays = extraDays;
+    }
+
+    res.status(201).json(response);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

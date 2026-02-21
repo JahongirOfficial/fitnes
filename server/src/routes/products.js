@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import Product from "../models/Product.js";
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
+import Debt from "../models/Debt.js";
 import { verifyToken } from "../middleware/auth.js";
 import { uploadProductImage } from "../middleware/upload.js";
 
@@ -123,7 +124,7 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Yetarli mahsulot yo'q" });
     }
 
-    // Balansdan to'lash tekshiruvi
+    // Balansdan to'lash (manfiy bo'lishi mumkin → qarz yaratiladi)
     if (paymentMethod === "balance") {
       if (!memberId) {
         return res.status(400).json({ message: "Balans bilan to'lash uchun a'zo tanlang" });
@@ -131,10 +132,37 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
       const member = await Member.findById(memberId);
       if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
       const totalAmount = product.price * quantity;
-      if ((member.balance || 0) < totalAmount) {
-        return res.status(400).json({ message: "Balans yetarli emas" });
-      }
       await Member.findByIdAndUpdate(memberId, { $inc: { balance: -totalAmount } });
+
+      // Manfiy balansni qarzga aylantirish
+      const updatedMember = await Member.findById(memberId);
+      if ((updatedMember.balance || 0) < 0) {
+        const debtAmount = Math.abs(updatedMember.balance);
+        await Member.findByIdAndUpdate(memberId, { balance: 0 });
+
+        const existingDebt = await Debt.findOne({
+          memberId,
+          status: { $in: ["unpaid", "partial"] },
+          description: /balans/i,
+        });
+
+        if (existingDebt) {
+          existingDebt.amount += debtAmount;
+          existingDebt.remainingAmount += debtAmount;
+          existingDebt.status = existingDebt.paidAmount > 0 ? "partial" : "unpaid";
+          await existingDebt.save();
+        } else {
+          await new Debt({
+            memberId,
+            personName: memberName || member.fullName,
+            phone: member.phone,
+            amount: debtAmount,
+            remainingAmount: debtAmount,
+            description: "Mahsulot sotib olish qarzi",
+            createdBy: "Tizim",
+          }).save();
+        }
+      }
     }
 
     product.stockQuantity -= quantity;

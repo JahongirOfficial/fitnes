@@ -85,8 +85,13 @@ export default function VisitsPage() {
 
   const handleCheckIn = async (memberId: string) => {
     try {
-      await checkIn.mutateAsync(memberId);
-      toast("success", "Kirish qayd etildi");
+      const result = await checkIn.mutateAsync(memberId);
+      if (result?.debtCreated) {
+        const amt = new Intl.NumberFormat("uz-UZ").format(result.debtAmount) + " so'm";
+        toast("warning", `Kirish qayd etildi. Obonement muddati o'tgan (${result.extraDays} kun). Qarz: ${amt}`);
+      } else {
+        toast("success", "Kirish qayd etildi");
+      }
       setScanModalOpen(false);
       setMemberSearch("");
       setSearchResults([]);
@@ -96,8 +101,13 @@ export default function VisitsPage() {
   };
 
   const handleQrCheckIn = async (memberId: string, memberName: string) => {
-    await checkIn.mutateAsync(memberId);
-    toast("success", `${memberName} kirish qayd etildi`);
+    const result = await checkIn.mutateAsync(memberId);
+    if (result?.debtCreated) {
+      const amt = new Intl.NumberFormat("uz-UZ").format(result.debtAmount) + " so'm";
+      toast("warning", `${memberName} kirish qayd etildi. Obonement muddati o'tgan (${result.extraDays} kun). Qarz: ${amt}`);
+    } else {
+      toast("success", `${memberName} kirish qayd etildi`);
+    }
   };
 
   const handleQrCheckOut = async (memberId: string, memberName: string) => {

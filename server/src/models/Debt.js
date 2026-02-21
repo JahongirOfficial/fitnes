@@ -8,6 +8,7 @@ const debtPaymentSchema = new mongoose.Schema({
 
 const debtSchema = new mongoose.Schema(
   {
+    memberId: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
     personName: { type: String, required: true, trim: true },
     phone: { type: String, trim: true },
     amount: { type: Number, required: true },

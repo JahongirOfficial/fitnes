@@ -1,9 +1,68 @@
 import { Router } from "express";
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
+import Debt from "../models/Debt.js";
+import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
+
+// Manfiy balansni qarzga aylantirish helper
+async function handleNegativeBalance(memberId, memberName, description) {
+  const member = await Member.findById(memberId);
+  if (!member || (member.balance || 0) >= 0) return;
+
+  const debtAmount = Math.abs(member.balance);
+  // Balansni 0 ga qaytarish
+  await Member.findByIdAndUpdate(memberId, { balance: 0 });
+
+  // Mavjud unpaid qarzni tekshirish (balans uchun)
+  const existingDebt = await Debt.findOne({
+    memberId,
+    status: { $in: ["unpaid", "partial"] },
+    description: /balans/i,
+  });
+
+  if (existingDebt) {
+    existingDebt.amount += debtAmount;
+    existingDebt.remainingAmount += debtAmount;
+    existingDebt.status = existingDebt.remainingAmount > 0 ? (existingDebt.paidAmount > 0 ? "partial" : "unpaid") : "paid";
+    await existingDebt.save();
+  } else {
+    await new Debt({
+      memberId,
+      personName: memberName || member.fullName,
+      phone: member.phone,
+      amount: debtAmount,
+      remainingAmount: debtAmount,
+      description: description || "Balans qarzi",
+      createdBy: "Tizim",
+    }).save();
+  }
+}
+
+// Obonement muddatini uzaytirish helper
+function calculateNewEndDate(currentEndDate, subType) {
+  const base = currentEndDate && new Date(currentEndDate) > new Date()
+    ? new Date(currentEndDate)
+    : new Date();
+
+  const newEnd = new Date(base);
+  switch (subType) {
+    case "daily":
+      newEnd.setDate(newEnd.getDate() + 1);
+      break;
+    case "monthly":
+      newEnd.setMonth(newEnd.getMonth() + 1);
+      break;
+    case "yearly":
+      newEnd.setFullYear(newEnd.getFullYear() + 1);
+      break;
+    default:
+      newEnd.setMonth(newEnd.getMonth() + 1);
+  }
+  return { startDate: currentEndDate && new Date(currentEndDate) > new Date() ? undefined : new Date(), endDate: newEnd };
+}
 
 // GET /api/payments
 router.get("/", verifyToken, async (req, res) => {
@@ -63,32 +122,55 @@ router.get("/", verifyToken, async (req, res) => {
 // POST /api/payments
 router.post("/", verifyToken, async (req, res) => {
   try {
-    const { category, paymentMethod, amount, memberId, balanceAction } = req.body;
+    const { category, paymentMethod, amount, memberId, balanceAction, subType, memberName } = req.body;
 
     // Balans operatsiyalari
     if (category === "balance" && memberId) {
       if (balanceAction === "subtract") {
-        // Balansdan ayirish
+        // Balansdan ayirish (manfiy bo'lishi mumkin)
         const member = await Member.findById(memberId);
         if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
-        if ((member.balance || 0) < amount) {
-          return res.status(400).json({ message: "Balans yetarli emas" });
-        }
         await Member.findByIdAndUpdate(memberId, { $inc: { balance: -amount } });
+        // Manfiy balansni qarzga aylantirish
+        await handleNegativeBalance(memberId, memberName, "Balansdan ayirish qarzi");
       } else if (paymentMethod !== "balance") {
         // Balansni to'ldirish
         await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
       }
     }
 
-    // Balansdan to'lash (paymentMethod=balance)
-    if (paymentMethod === "balance" && memberId) {
+    // Balansdan to'lash (paymentMethod=balance) — manfiy bo'lishi mumkin
+    if (paymentMethod === "balance" && memberId && category !== "balance") {
       const member = await Member.findById(memberId);
       if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
-      if ((member.balance || 0) < amount) {
-        return res.status(400).json({ message: "Balans yetarli emas" });
-      }
       await Member.findByIdAndUpdate(memberId, { $inc: { balance: -amount } });
+      // Manfiy balansni qarzga aylantirish
+      await handleNegativeBalance(memberId, memberName, "Balansdan to'lov qarzi");
+    }
+
+    // Obonement to'lovi — muddatni uzaytirish
+    if (category === "subscription" && memberId) {
+      const member = await Member.findById(memberId);
+      if (member) {
+        const type = subType || member.subscription?.type || "monthly";
+        const currentEndDate = member.subscription?.endDate;
+        const { startDate, endDate } = calculateNewEndDate(currentEndDate, type);
+
+        const subscriptionUpdate = {
+          type,
+          endDate,
+          price: amount,
+          status: "active",
+        };
+        if (startDate) {
+          subscriptionUpdate.startDate = startDate;
+        }
+
+        await Member.findByIdAndUpdate(memberId, {
+          subscription: { ...member.subscription?.toObject?.() || {}, ...subscriptionUpdate },
+          status: "active",
+        });
+      }
     }
 
     const payment = new Payment(req.body);

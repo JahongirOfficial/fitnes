@@ -118,6 +118,7 @@ export interface DebtPayment {
 
 export interface Debt {
   _id: string;
+  memberId?: string;
   personName: string;
   phone?: string;
   amount: number;

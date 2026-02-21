@@ -146,6 +146,8 @@ export function useCheckIn() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["visits"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["debts"] });
+      qc.invalidateQueries({ queryKey: ["members"] });
     },
   });
 }

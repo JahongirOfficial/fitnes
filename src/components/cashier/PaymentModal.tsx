@@ -302,12 +302,6 @@ export default function PaymentModal({
     if (isIncome && !selectedMember) return;
     if (!amount || Number(amount) <= 0) return;
 
-    if (paymentMethod === "balance" && selectedMember) {
-      if ((selectedMember.balance || 0) < Number(amount)) {
-        return; // insufficient balance - button should already be disabled
-      }
-    }
-
     setIsLoading(true);
     try {
       if (isIncome && incomeCategory === "product" && selectedProducts.length > 0) {
@@ -332,6 +326,7 @@ export default function PaymentModal({
           category: isIncome ? (incomeCategory === "balance" ? "balance" : incomeCategory) : expenseCategory,
           paymentMethod,
           ...(incomeCategory === "balance" ? { balanceAction } : {}),
+          ...(incomeCategory === "subscription" ? { subType: selectedMember?.subscription?.type || subType } : {}),
         });
       }
       onClose();
@@ -809,8 +804,8 @@ export default function PaymentModal({
                         {selectedMember.phone}
                       </p>
                     )}
-                    {(selectedMember.balance ?? 0) > 0 && (
-                      <p className="text-xs text-emerald-600 font-semibold">
+                    {(selectedMember.balance ?? 0) !== 0 && (
+                      <p className={cn("text-xs font-semibold", (selectedMember.balance || 0) < 0 ? "text-red-600" : "text-emerald-600")}>
                         Balans: {formatPrice(selectedMember.balance || 0)}
                       </p>
                     )}
@@ -970,8 +965,8 @@ export default function PaymentModal({
                 { value: "cash", label: "Naqd" },
                 { value: "card", label: "Karta" },
                 { value: "transfer", label: "O'tkazma" },
-                ...(incomeCategory !== "balance" && selectedMember?.balance
-                  ? [{ value: "balance", label: `Balans (${formatPrice(selectedMember.balance)})` }]
+                ...(incomeCategory !== "balance" && selectedMember && (selectedMember.balance || 0) > 0
+                  ? [{ value: "balance", label: `Balans (${formatPrice(selectedMember.balance || 0)})` }]
                   : []),
               ].map((m) => (
                 <button
