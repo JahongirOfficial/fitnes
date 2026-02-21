@@ -413,35 +413,7 @@ export default function PaymentModal({
         }
       >
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Tavsif *
-            </label>
-            <input
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Masalan: Oylik ish haqi"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
-          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Summa (so&apos;m) *
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={formatAmountInput(amount)}
-                onChange={(e) => {
-                  const raw = e.target.value.replace(/\s/g, "");
-                  if (/^\d*$/.test(raw)) setAmount(raw);
-                }}
-                placeholder="0"
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-              />
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">
                 Kategoriya
@@ -458,6 +430,34 @@ export default function PaymentModal({
                 ))}
               </select>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Summa (so&apos;m) *
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatAmountInput(amount)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\s/g, "");
+                  if (/^\d*$/.test(raw)) setAmount(raw);
+                }}
+                placeholder="0"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Tavsif *
+            </label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Masalan: Oylik ish haqi"
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">
