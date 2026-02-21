@@ -928,36 +928,19 @@ export default function PaymentModal({
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-semibold"
               />
             </div>
-            {(incomeCategory === "subscription" || incomeCategory === "balance") && (
+            {incomeCategory === "subscription" && selectedMember?.subscription?.price && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Tarif narxi
+                  A&apos;zo tarif narxi
                 </label>
                 <div className="relative">
                   <input
                     type="text"
                     inputMode="numeric"
-                    value={formatAmountInput(String(prices[subType]))}
-                    onChange={(e) => {
-                      if (!editingOfficialPrice) return;
-                      const raw = e.target.value.replace(/\s/g, "");
-                      if (/^\d*$/.test(raw)) {
-                        setPrices((prev) => ({ ...prev, [subType]: Number(raw) || 0 }));
-                      }
-                    }}
-                    disabled={!editingOfficialPrice}
-                    className={cn(
-                      "w-full px-4 py-2.5 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none transition font-semibold",
-                      editingOfficialPrice ? "focus:ring-2 focus:ring-blue-500 focus:border-transparent" : "opacity-70"
-                    )}
+                    value={formatAmountInput(String(selectedMember.subscription.price))}
+                    disabled
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none transition font-semibold opacity-70"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setEditingOfficialPrice(!editingOfficialPrice)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition"
-                  >
-                    <Pencil size={14} />
-                  </button>
                 </div>
               </div>
             )}
