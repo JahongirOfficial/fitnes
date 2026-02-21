@@ -230,7 +230,7 @@ export default function PaymentModal({
   // ── Debounced member search ──────────────────────────────────────────
   useEffect(() => {
     if (!showMemberDropdown) return;
-    const timer = setTimeout(() => searchMembers(memberSearch), 300);
+    const timer = setTimeout(() => searchMembers(memberSearch), 500);
     return () => clearTimeout(timer);
   }, [memberSearch, showMemberDropdown, searchMembers]);
 

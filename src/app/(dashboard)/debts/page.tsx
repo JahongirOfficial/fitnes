@@ -53,7 +53,7 @@ export default function DebtsPage() {
   // Filter va qidiruv holatlari
   const [activeTab, setActiveTab] = useState<StatusFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebounce(searchQuery, 500);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Modal holatlari

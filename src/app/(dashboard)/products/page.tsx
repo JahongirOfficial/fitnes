@@ -39,7 +39,7 @@ export default function ProductsPage() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("all");
-  const debouncedSearch = useDebounce(searchQuery, 300);
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [productModalMode, setProductModalMode] = useState<"create" | "edit">("create");
