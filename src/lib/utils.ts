@@ -74,7 +74,32 @@ export function getPaymentMethodText(method: string): string {
       return "Karta";
     case "transfer":
       return "O'tkazma";
+    case "balance":
+      return "Balans";
     default:
       return method;
   }
+}
+
+export function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length <= 3) return `+${digits}`;
+  if (digits.length <= 5) return `+${digits.slice(0, 3)} ${digits.slice(3)}`;
+  if (digits.length <= 8) return `+${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5)}`;
+  if (digits.length <= 10) return `+${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+  return `+${digits.slice(0, 3)} ${digits.slice(3, 5)} ${digits.slice(5, 8)} ${digits.slice(8, 10)} ${digits.slice(10, 12)}`;
+}
+
+export function unformatPhone(formatted: string): string {
+  return "+" + formatted.replace(/\D/g, "");
+}
+
+export function formatAmountInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+}
+
+export function unformatAmount(formatted: string): number {
+  return Number(formatted.replace(/\s/g, "")) || 0;
 }

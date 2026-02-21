@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import { Loader2, QrCode, Save, UserPlus, Download, Printer } from "lucide-react";
 import { downloadQrCode, printQrCard } from "@/lib/qr-utils";
 import Modal from "@/components/ui/Modal";
-import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+import { cn, formatPhoneInput, unformatPhone, formatAmountInput, unformatAmount } from "@/lib/utils";
 
 interface MemberFormData {
   fullName: string;
@@ -16,6 +17,7 @@ interface MemberFormData {
   subscriptionStartDate: string;
   subscriptionEndDate: string;
   subscriptionPrice: number;
+  paymentMethod: string;
 }
 
 interface MemberModalProps {
@@ -49,6 +51,7 @@ export default function MemberModal({
   mode,
 }: MemberModalProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [settingsPrices, setSettingsPrices] = useState<Record<string, number>>(defaultPrices);
   const [form, setForm] = useState<MemberFormData>({
     fullName: "",
     phone: "+998",
@@ -59,13 +62,34 @@ export default function MemberModal({
     subscriptionStartDate: new Date().toISOString().split("T")[0],
     subscriptionEndDate: "",
     subscriptionPrice: 300000,
+    paymentMethod: "cash",
   });
+
+  // Load settings prices when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    const loadPricing = async () => {
+      try {
+        const settings = await api.getSettings();
+        if (settings?.pricing) {
+          setSettingsPrices({
+            daily: settings.pricing.daily || 30000,
+            monthly: settings.pricing.monthly || 300000,
+            yearly: settings.pricing.yearly || 2500000,
+          });
+        }
+      } catch {
+        /* use defaults */
+      }
+    };
+    loadPricing();
+  }, [isOpen]);
 
   useEffect(() => {
     if (member && (mode === "edit" || mode === "view")) {
       setForm({
         fullName: member.fullName || "",
-        phone: member.phone || "+998",
+        phone: member.phone ? formatPhoneInput(member.phone) : "+998",
         email: member.email || "",
         dateOfBirth: member.dateOfBirth || "",
         address: member.address || "",
@@ -77,6 +101,7 @@ export default function MemberModal({
           ? new Date(member.subscription.endDate).toISOString().split("T")[0]
           : "",
         subscriptionPrice: member.subscription?.price || 300000,
+        paymentMethod: "cash",
       });
     } else {
       const today = new Date().toISOString().split("T")[0];
@@ -89,17 +114,35 @@ export default function MemberModal({
         subscriptionType: "monthly",
         subscriptionStartDate: today,
         subscriptionEndDate: calculateEndDate(today, "monthly"),
-        subscriptionPrice: 300000,
+        subscriptionPrice: settingsPrices.monthly || 300000,
+        paymentMethod: "cash",
       });
     }
-  }, [member, mode, isOpen]);
+  }, [member, mode, isOpen, settingsPrices]);
 
   const handleChange = (field: keyof MemberFormData, value: string | number) => {
     setForm((prev) => {
+      // Format phone input for display
+      if (field === "phone") {
+        const formatted = formatPhoneInput(value as string);
+        return { ...prev, phone: formatted };
+      }
+
+      // Format price input - store as number but handle string input
+      if (field === "subscriptionPrice") {
+        const numValue = typeof value === "string" ? unformatAmount(value) : value;
+        return { ...prev, subscriptionPrice: numValue };
+      }
+
       const updated = { ...prev, [field]: value };
 
       if (field === "subscriptionType") {
-        updated.subscriptionPrice = defaultPrices[value as string] || 300000;
+        // Only auto-update price if it matches the OLD default
+        const oldDefault = settingsPrices[prev.subscriptionType] || 300000;
+        const newDefault = settingsPrices[value as string] || 300000;
+        if (prev.subscriptionPrice === oldDefault || prev.subscriptionPrice === defaultPrices[prev.subscriptionType]) {
+          updated.subscriptionPrice = newDefault;
+        }
         updated.subscriptionEndDate = calculateEndDate(
           updated.subscriptionStartDate,
           value as string
@@ -123,7 +166,7 @@ export default function MemberModal({
     try {
       await onSubmit({
         fullName: form.fullName,
-        phone: form.phone,
+        phone: unformatPhone(form.phone),
         email: form.email || undefined,
         dateOfBirth: form.dateOfBirth || undefined,
         address: form.address || undefined,
@@ -133,6 +176,7 @@ export default function MemberModal({
           endDate: form.subscriptionEndDate,
           price: form.subscriptionPrice,
         },
+        paymentMethod: form.paymentMethod,
       });
       onClose();
     } catch {
@@ -251,7 +295,7 @@ export default function MemberModal({
               value={form.phone}
               onChange={(e) => handleChange("phone", e.target.value)}
               disabled={isView}
-              placeholder="+998901234567"
+              placeholder="+998 90 123 45 67"
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:opacity-60"
             />
           </div>
@@ -348,15 +392,45 @@ export default function MemberModal({
               Narx (so&#39;m)
             </label>
             <input
-              type="number"
-              value={form.subscriptionPrice}
+              type="text"
+              inputMode="numeric"
+              value={formatAmountInput(String(form.subscriptionPrice))}
               onChange={(e) =>
-                handleChange("subscriptionPrice", Number(e.target.value))
+                handleChange("subscriptionPrice", e.target.value)
               }
               disabled={isView}
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:opacity-60 max-w-xs"
             />
           </div>
+          {/* Payment method selector - only in create mode */}
+          {mode === "create" && (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                To&apos;lov usuli
+              </label>
+              <div className="flex gap-2">
+                {[
+                  { value: "cash", label: "Naqd" },
+                  { value: "card", label: "Karta" },
+                  { value: "transfer", label: "O'tkazma" },
+                ].map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setForm((prev) => ({ ...prev, paymentMethod: m.value }))}
+                    className={cn(
+                      "flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+                      form.paymentMethod === m.value
+                        ? "border-blue-600 bg-blue-50 text-blue-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </Modal>

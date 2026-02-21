@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Payment from "../models/Payment.js";
+import Member from "../models/Member.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -62,6 +63,23 @@ router.get("/", verifyToken, async (req, res) => {
 // POST /api/payments
 router.post("/", verifyToken, async (req, res) => {
   try {
+    const { category, paymentMethod, amount, memberId } = req.body;
+
+    // Balansni to'ldirish (category=balance, paymentMethod=cash/card/transfer)
+    if (category === "balance" && paymentMethod !== "balance" && memberId) {
+      await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
+    }
+
+    // Balansdan to'lash (paymentMethod=balance)
+    if (paymentMethod === "balance" && memberId) {
+      const member = await Member.findById(memberId);
+      if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+      if ((member.balance || 0) < amount) {
+        return res.status(400).json({ message: "Balans yetarli emas" });
+      }
+      await Member.findByIdAndUpdate(memberId, { $inc: { balance: -amount } });
+    }
+
     const payment = new Payment(req.body);
     await payment.save();
     res.status(201).json(payment);

@@ -207,7 +207,7 @@ class ApiClient {
     return this.request<any>(`/products/${id}`, { method: "DELETE" });
   }
 
-  async sellProduct(id: string, data: { quantity: number; paymentMethod: string }) {
+  async sellProduct(id: string, data: { quantity: number; paymentMethod: string; memberId?: string; memberName?: string }) {
     return this.request<any>(`/products/${id}/sell`, {
       method: "POST",
       body: JSON.stringify(data),

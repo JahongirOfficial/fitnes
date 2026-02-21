@@ -24,6 +24,7 @@ const memberSchema = new mongoose.Schema(
       default: "inactive",
     },
     subscription: subscriptionSchema,
+    balance: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

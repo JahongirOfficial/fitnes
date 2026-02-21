@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Member from "../models/Member.js";
+import Payment from "../models/Payment.js";
 import { verifyToken } from "../middleware/auth.js";
 import QRCode from "qrcode";
 
@@ -111,6 +112,24 @@ router.post("/", verifyToken, async (req, res) => {
     }
 
     await member.save();
+
+    // Yangi a'zo to'lovini kassaga kirim qilish
+    if (member.subscription && member.subscription.price > 0) {
+      const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
+      const subLabel = subLabels[member.subscription.type] || member.subscription.type;
+      const payment = new Payment({
+        memberId: member._id,
+        memberName: member.fullName,
+        type: "income",
+        category: "subscription",
+        amount: member.subscription.price,
+        paymentMethod: req.body.paymentMethod || "cash",
+        description: `${subLabel} abonement to'lovi (yangi a'zo)`,
+        createdBy: "Kassir",
+      });
+      await payment.save();
+    }
+
     res.status(201).json(member);
   } catch (err) {
     res.status(500).json({ message: err.message });

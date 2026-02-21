@@ -96,7 +96,7 @@ export default function ProductsPage() {
     }
   };
 
-  const handleSellSubmit = async (data: { quantity: number; paymentMethod: string }) => {
+  const handleSellSubmit = async (data: { quantity: number; paymentMethod: string; memberId?: string; memberName?: string }) => {
     if (!sellProduct) return;
     await sellProductMutation.mutateAsync({ id: sellProduct._id, data });
     toast("success", `${sellProduct.name} sotildi!`);

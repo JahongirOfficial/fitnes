@@ -46,7 +46,7 @@ function getCategoryLabel(category: string): string {
 }
 
 function getPaymentMethodLabel(method: string): string {
-  const map: Record<string, string> = { cash: "Naqd", card: "Karta", transfer: "O'tkazma" };
+  const map: Record<string, string> = { cash: "Naqd", card: "Karta", transfer: "O'tkazma", balance: "Balans" };
   return map[method] || method;
 }
 
@@ -259,10 +259,12 @@ export default function CashierPage() {
                         <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border",
                           payment.paymentMethod === "cash" && "border-blue-200 bg-blue-50 text-blue-700",
                           payment.paymentMethod === "card" && "border-purple-200 bg-purple-50 text-purple-700",
-                          payment.paymentMethod === "transfer" && "border-gray-200 bg-gray-50 text-gray-600")}>
+                          payment.paymentMethod === "transfer" && "border-gray-200 bg-gray-50 text-gray-600",
+                          payment.paymentMethod === "balance" && "border-emerald-200 bg-emerald-50 text-emerald-700")}>
                           {payment.paymentMethod === "cash" && <Banknote className="w-3 h-3" />}
                           {payment.paymentMethod === "card" && <CreditCard className="w-3 h-3" />}
                           {payment.paymentMethod === "transfer" && <ArrowUpRight className="w-3 h-3" />}
+                          {payment.paymentMethod === "balance" && <Wallet className="w-3 h-3" />}
                           {getPaymentMethodLabel(payment.paymentMethod)}
                         </span>
                       </td>

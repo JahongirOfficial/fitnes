@@ -40,12 +40,13 @@ export function useDeleteProduct() {
 export function useSellProduct() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { quantity: number; paymentMethod: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { quantity: number; paymentMethod: string; memberId?: string; memberName?: string } }) =>
       api.sellProduct(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["members"] });
     },
   });
 }
@@ -69,7 +70,11 @@ export function useCreateMember() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: any) => api.createMember(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["members"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
   });
 }
 
@@ -120,6 +125,7 @@ export function useCreatePayment() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
+      qc.invalidateQueries({ queryKey: ["members"] });
     },
   });
 }

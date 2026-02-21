@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import Product from "../models/Product.js";
 import Payment from "../models/Payment.js";
+import Member from "../models/Member.js";
 import { verifyToken } from "../middleware/auth.js";
 import { uploadProductImage } from "../middleware/upload.js";
 
@@ -120,6 +121,20 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
 
     if (product.stockQuantity < quantity) {
       return res.status(400).json({ message: "Yetarli mahsulot yo'q" });
+    }
+
+    // Balansdan to'lash tekshiruvi
+    if (paymentMethod === "balance") {
+      if (!memberId) {
+        return res.status(400).json({ message: "Balans bilan to'lash uchun a'zo tanlang" });
+      }
+      const member = await Member.findById(memberId);
+      if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+      const totalAmount = product.price * quantity;
+      if ((member.balance || 0) < totalAmount) {
+        return res.status(400).json({ message: "Balans yetarli emas" });
+      }
+      await Member.findByIdAndUpdate(memberId, { $inc: { balance: -totalAmount } });
     }
 
     product.stockQuantity -= quantity;

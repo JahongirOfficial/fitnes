@@ -12,7 +12,7 @@ export interface User {
 
 export type MemberStatus = "active" | "inactive" | "expired";
 export type SubscriptionType = "daily" | "monthly" | "yearly";
-export type PaymentMethod = "cash" | "card" | "transfer";
+export type PaymentMethod = "cash" | "card" | "transfer" | "balance";
 export type PaymentType = "income" | "expense";
 export type ProductCategory = "drink" | "chocolate" | "cocktail" | "yogurt";
 
@@ -28,6 +28,7 @@ export interface Member {
   qrCode?: string;
   status: MemberStatus;
   subscription?: Subscription;
+  balance?: number;
   createdAt: string;
 }
 

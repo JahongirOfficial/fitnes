@@ -17,9 +17,10 @@ import {
   Package,
   Minus,
   Plus,
+  Pencil,
 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
-import { cn } from "@/lib/utils";
+import { cn, formatAmountInput, unformatAmount } from "@/lib/utils";
 import { api } from "@/lib/api";
 
 // ── Types ─────────────────────────────────────────────────────────────────
@@ -36,6 +37,7 @@ interface MemberOption {
   fullName: string;
   phone: string;
   status: string;
+  balance?: number;
   subscription?: {
     type: string;
     startDate: string;
@@ -90,6 +92,7 @@ export default function PaymentModal({
 
   // ── Pricing from settings ────────────────────────────────────────────
   const [prices, setPrices] = useState<Record<SubType, number>>(DEFAULT_PRICES);
+  const [editingOfficialPrice, setEditingOfficialPrice] = useState(false);
 
   // ── Member selection ─────────────────────────────────────────────────
   const [memberSearch, setMemberSearch] = useState("");
@@ -149,6 +152,7 @@ export default function PaymentModal({
       setPaymentMethod("cash");
       setExpenseCategory("salary");
       setShowMemberDropdown(false);
+      setEditingOfficialPrice(false);
 
       if (preselectedMember) {
         setSelectedMember(preselectedMember as MemberOption);
@@ -295,6 +299,12 @@ export default function PaymentModal({
     if (isIncome && !selectedMember) return;
     if (!amount || Number(amount) <= 0) return;
 
+    if (paymentMethod === "balance" && selectedMember) {
+      if ((selectedMember.balance || 0) < Number(amount)) {
+        return; // insufficient balance - button should already be disabled
+      }
+    }
+
     setIsLoading(true);
     try {
       if (isIncome && incomeCategory === "product" && selectedProducts.length > 0) {
@@ -303,6 +313,8 @@ export default function PaymentModal({
           await api.sellProduct(sp.product._id, {
             quantity: sp.quantity,
             paymentMethod,
+            memberId: selectedMember?._id,
+            memberName: selectedMember?.fullName,
           });
         }
         // Submit callback to refresh parent
@@ -419,9 +431,13 @@ export default function PaymentModal({
                 Summa (so&apos;m) *
               </label>
               <input
-                type="number"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                type="text"
+                inputMode="numeric"
+                value={formatAmountInput(amount)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\s/g, "");
+                  if (/^\d*$/.test(raw)) setAmount(raw);
+                }}
                 placeholder="0"
                 className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
               />
@@ -837,6 +853,11 @@ export default function PaymentModal({
                         {selectedMember.phone}
                       </p>
                     )}
+                    {(selectedMember.balance ?? 0) > 0 && (
+                      <p className="text-xs text-emerald-600 font-semibold">
+                        Balans: {formatPrice(selectedMember.balance || 0)}
+                      </p>
+                    )}
                   </div>
                 </div>
                 {!preselectedMember && (
@@ -934,17 +955,56 @@ export default function PaymentModal({
             )}
           </div>
 
-          {/* Amount (auto-filled but editable) */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Summa (so&apos;m)
-            </label>
-            <input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-semibold"
-            />
+          {/* Amount + Official Price */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Summa (so&apos;m)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatAmountInput(amount)}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/\s/g, "");
+                  if (/^\d*$/.test(raw)) setAmount(raw);
+                }}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition font-semibold"
+              />
+            </div>
+            {(incomeCategory === "subscription" || incomeCategory === "balance") && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Tarif narxi
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={formatAmountInput(String(prices[subType]))}
+                    onChange={(e) => {
+                      if (!editingOfficialPrice) return;
+                      const raw = e.target.value.replace(/\s/g, "");
+                      if (/^\d*$/.test(raw)) {
+                        setPrices((prev) => ({ ...prev, [subType]: Number(raw) || 0 }));
+                      }
+                    }}
+                    disabled={!editingOfficialPrice}
+                    className={cn(
+                      "w-full px-4 py-2.5 pr-10 bg-gray-50 border border-gray-200 rounded-xl text-sm outline-none transition font-semibold",
+                      editingOfficialPrice ? "focus:ring-2 focus:ring-blue-500 focus:border-transparent" : "opacity-70"
+                    )}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditingOfficialPrice(!editingOfficialPrice)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600 transition"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Description (optional) */}
@@ -971,6 +1031,9 @@ export default function PaymentModal({
                 { value: "cash", label: "Naqd" },
                 { value: "card", label: "Karta" },
                 { value: "transfer", label: "O'tkazma" },
+                ...(incomeCategory !== "balance" && selectedMember?.balance
+                  ? [{ value: "balance", label: `Balans (${formatPrice(selectedMember.balance)})` }]
+                  : []),
               ].map((m) => (
                 <button
                   key={m.value}
