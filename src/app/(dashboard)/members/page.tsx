@@ -34,6 +34,7 @@ interface Member {
   memberId?: string;
   qrCode?: string;
   status: MemberStatus;
+  balance?: number;
   subscription?: {
     type: string;
     startDate: string;
@@ -300,12 +301,13 @@ export default function MembersPage() {
                 <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
                 <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
                 <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
+                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Balans</th>
                 <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {Array.from({ length: 5 }).map((_, i) => (
-                <TableRowSkeleton key={i} cols={8} />
+                <TableRowSkeleton key={i} cols={9} />
               ))}
             </tbody>
           </table>
@@ -323,6 +325,7 @@ export default function MembersPage() {
                   <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
                   <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
                   <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
+                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Balans</th>
                   <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">To&apos;lov</th>
                   <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
                 </tr>
@@ -330,7 +333,7 @@ export default function MembersPage() {
               <tbody className="divide-y divide-gray-100">
                 {members.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-3 sm:px-6 py-12 text-center text-gray-400">
+                    <td colSpan={10} className="px-3 sm:px-6 py-12 text-center text-gray-400">
                       Hech qanday a&apos;zo topilmadi
                     </td>
                   </tr>
@@ -376,6 +379,13 @@ export default function MembersPage() {
                         </span>
                       </td>
                       <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">{formatDate(member.subscription?.endDate)}</td>
+                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                        <span className={`text-sm font-semibold ${(member.balance || 0) > 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                          {(member.balance || 0) > 0
+                            ? new Intl.NumberFormat("uz-UZ").format(member.balance!) + " so'm"
+                            : "0"}
+                        </span>
+                      </td>
                       <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
                         <button
                           type="button"
@@ -487,6 +497,14 @@ export default function MembersPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-400">Muddat</span>
                     <span className="text-gray-700">{formatDate(member.subscription?.endDate)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-400">Balans</span>
+                    <span className={`font-semibold ${(member.balance || 0) > 0 ? "text-emerald-600" : "text-gray-400"}`}>
+                      {(member.balance || 0) > 0
+                        ? new Intl.NumberFormat("uz-UZ").format(member.balance!) + " so'm"
+                        : "0 so'm"}
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 border-t border-gray-100 pt-3">

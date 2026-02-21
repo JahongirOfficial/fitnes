@@ -63,11 +63,22 @@ router.get("/", verifyToken, async (req, res) => {
 // POST /api/payments
 router.post("/", verifyToken, async (req, res) => {
   try {
-    const { category, paymentMethod, amount, memberId } = req.body;
+    const { category, paymentMethod, amount, memberId, balanceAction } = req.body;
 
-    // Balansni to'ldirish (category=balance, paymentMethod=cash/card/transfer)
-    if (category === "balance" && paymentMethod !== "balance" && memberId) {
-      await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
+    // Balans operatsiyalari
+    if (category === "balance" && memberId) {
+      if (balanceAction === "subtract") {
+        // Balansdan ayirish
+        const member = await Member.findById(memberId);
+        if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+        if ((member.balance || 0) < amount) {
+          return res.status(400).json({ message: "Balans yetarli emas" });
+        }
+        await Member.findByIdAndUpdate(memberId, { $inc: { balance: -amount } });
+      } else if (paymentMethod !== "balance") {
+        // Balansni to'ldirish
+        await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
+      }
     }
 
     // Balansdan to'lash (paymentMethod=balance)

@@ -13,7 +13,6 @@ import {
   Search,
   Check,
   X,
-  Calendar,
   Package,
   Minus,
   Plus,
@@ -93,6 +92,7 @@ export default function PaymentModal({
   // ── Pricing from settings ────────────────────────────────────────────
   const [prices, setPrices] = useState<Record<SubType, number>>(DEFAULT_PRICES);
   const [editingOfficialPrice, setEditingOfficialPrice] = useState(false);
+  const [balanceAction, setBalanceAction] = useState<"add" | "subtract">("add");
 
   // ── Member selection ─────────────────────────────────────────────────
   const [memberSearch, setMemberSearch] = useState("");
@@ -153,6 +153,7 @@ export default function PaymentModal({
       setExpenseCategory("salary");
       setShowMemberDropdown(false);
       setEditingOfficialPrice(false);
+      setBalanceAction("add");
 
       if (preselectedMember) {
         setSelectedMember(preselectedMember as MemberOption);
@@ -160,11 +161,17 @@ export default function PaymentModal({
     }
   }, [isOpen, isIncome, preselectedMember]);
 
-  // ── Auto-set amount based on category/subtype ────────────────────────
+  // ── Auto-set amount based on category/member ─────────────────────────
   useEffect(() => {
     if (!isIncome) return;
-    if (incomeCategory === "subscription" || incomeCategory === "balance") {
-      setAmount(String(prices[subType]));
+    if (incomeCategory === "subscription") {
+      // A'zoning abonement narxidan foydalanish
+      if (selectedMember?.subscription?.price) {
+        setAmount(String(selectedMember.subscription.price));
+        setSubType((selectedMember.subscription.type as SubType) || "monthly");
+      } else {
+        setAmount(String(prices.monthly));
+      }
     } else if (incomeCategory === "product") {
       const total = selectedProducts.reduce(
         (sum, sp) => sum + sp.product.price * sp.quantity,
@@ -172,7 +179,8 @@ export default function PaymentModal({
       );
       setAmount(String(total));
     }
-  }, [isIncome, incomeCategory, subType, prices, selectedProducts]);
+    // balance: foydalanuvchi o'zi kiritadi
+  }, [isIncome, incomeCategory, selectedMember, prices, selectedProducts]);
 
   // ── Auto-generate description ────────────────────────────────────────
   useEffect(() => {
@@ -183,9 +191,11 @@ export default function PaymentModal({
       yearly: "Yillik",
     };
     if (incomeCategory === "subscription") {
-      setDescription(`${subLabels[subType]} abonement to'lovi`);
+      const memberSubType = selectedMember?.subscription?.type as SubType;
+      const label = memberSubType ? subLabels[memberSubType] : subLabels[subType];
+      setDescription(`${label} abonement to'lovi`);
     } else if (incomeCategory === "balance") {
-      setDescription(`${subLabels[subType]} balansni to'ldirish`);
+      setDescription(balanceAction === "subtract" ? "Balansdan ayirish" : "Balansni to'ldirish");
     } else if (incomeCategory === "product") {
       if (selectedProducts.length > 0) {
         const names = selectedProducts.map(
@@ -196,7 +206,7 @@ export default function PaymentModal({
         setDescription("");
       }
     }
-  }, [isIncome, incomeCategory, subType, selectedProducts]);
+  }, [isIncome, incomeCategory, subType, selectedMember, selectedProducts, balanceAction]);
 
   // ── Search members ───────────────────────────────────────────────────
   const searchMembers = useCallback(
@@ -206,11 +216,6 @@ export default function PaymentModal({
         const params: any = { limit: 20 };
         if (query.trim()) params.search = query.trim();
 
-        // Filter by subscription type for subscription payments
-        if (isIncome && incomeCategory === "subscription") {
-          params.subscription = subType;
-        }
-
         const data = await api.searchMembers(params);
         setMembers(data.members || []);
       } catch {
@@ -219,7 +224,7 @@ export default function PaymentModal({
         setMembersLoading(false);
       }
     },
-    [isIncome, incomeCategory, subType]
+    []
   );
 
   // ── Debounced member search ──────────────────────────────────────────
@@ -283,15 +288,13 @@ export default function PaymentModal({
     if (cat === "product") {
       loadProducts();
       setStep("products");
+    } else if (cat === "balance") {
+      setAmount("");
+      setStep("details");
     } else {
-      setStep("subtype");
+      // subscription — to'g'ridan-to'g'ri details ga o'tadi
+      setStep("details");
     }
-  };
-
-  // ── Handle subtype selection then go to details ──────────────────────
-  const handleSubTypeSelect = (st: SubType) => {
-    setSubType(st);
-    setStep("details");
   };
 
   // ── Handle submit ────────────────────────────────────────────────────
@@ -321,13 +324,14 @@ export default function PaymentModal({
         await onSubmit({ _skipCreate: true });
       } else {
         await onSubmit({
-          type,
+          type: (incomeCategory === "balance" && balanceAction === "subtract") ? "expense" : type,
           description: description || undefined,
           memberName: selectedMember?.fullName || undefined,
           memberId: selectedMember?._id || undefined,
           amount: Number(amount),
           category: isIncome ? (incomeCategory === "balance" ? "balance" : incomeCategory) : expenseCategory,
           paymentMethod,
+          ...(incomeCategory === "balance" ? { balanceAction } : {}),
         });
       }
       onClose();
@@ -348,13 +352,11 @@ export default function PaymentModal({
       if (incomeCategory === "product") {
         setStep("products");
       } else {
-        setStep("subtype");
+        setStep("category");
       }
     } else if (step === "products") {
       setStep("category");
       setSelectedProducts([]);
-    } else if (step === "subtype") {
-      setStep("category");
     } else {
       onClose();
     }
@@ -366,14 +368,12 @@ export default function PaymentModal({
     switch (step) {
       case "category":
         return "Kirim - Kategoriya";
-      case "subtype":
-        return incomeCategory === "subscription"
-          ? "Abonement turi"
-          : "Balans turi";
       case "products":
         return "Mahsulot tanlash";
       case "details":
         return "To'lov ma'lumotlari";
+      default:
+        return "Kirim";
     }
   };
 
@@ -575,7 +575,7 @@ export default function PaymentModal({
             {
               key: "balance" as IncomeCategory,
               label: "Balansni to'ldirish",
-              desc: "A'zo balansini kunlik, oylik yoki yillik to'ldirish",
+              desc: "A'zo balansiga pul qo'shish yoki ayirish",
               icon: Wallet,
               color: "bg-emerald-50 text-emerald-600 border-emerald-200 hover:border-emerald-400",
               iconBg: "bg-emerald-100",
@@ -608,78 +608,7 @@ export default function PaymentModal({
         </div>
       )}
 
-      {/* ── Step 2: Sub-type Selection (for subscription/balance) ──── */}
-      {step === "subtype" && (
-        <div className="space-y-3">
-          <button
-            onClick={goBack}
-            className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition mb-2"
-          >
-            <ChevronLeft size={14} />
-            Ortga
-          </button>
-          <p className="text-sm text-gray-500 mb-2">
-            {incomeCategory === "subscription"
-              ? "Abonement turini tanlang:"
-              : "Balans turini tanlang:"}
-          </p>
-          {(
-            [
-              {
-                key: "daily" as SubType,
-                label: "Kunlik",
-                icon: Calendar,
-                color: "border-orange-200 hover:border-orange-400 bg-orange-50",
-                iconBg: "bg-orange-100 text-orange-600",
-              },
-              {
-                key: "monthly" as SubType,
-                label: "Oylik",
-                icon: Calendar,
-                color: "border-blue-200 hover:border-blue-400 bg-blue-50",
-                iconBg: "bg-blue-100 text-blue-600",
-              },
-              {
-                key: "yearly" as SubType,
-                label: "Yillik",
-                icon: Calendar,
-                color: "border-purple-200 hover:border-purple-400 bg-purple-50",
-                iconBg: "bg-purple-100 text-purple-600",
-              },
-            ] as const
-          ).map((st) => (
-            <button
-              key={st.key}
-              type="button"
-              onClick={() => handleSubTypeSelect(st.key)}
-              className={cn(
-                "w-full flex items-center justify-between p-4 rounded-xl border-2 transition-all",
-                st.color
-              )}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-lg",
-                    st.iconBg
-                  )}
-                >
-                  <st.icon className="w-5 h-5" />
-                </div>
-                <span className="font-semibold text-gray-900">{st.label}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-gray-700">
-                  {formatPrice(prices[st.key])}
-                </span>
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              </div>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {/* ── Step 2b: Product Selection ──────────────────────────────── */}
+      {/* ── Step 2: Product Selection ──────────────────────────────── */}
       {step === "products" && (
         <div className="space-y-4">
           {productsLoading ? (
@@ -804,29 +733,56 @@ export default function PaymentModal({
                 <p className="text-xs text-gray-500">Kategoriya</p>
                 <p className="text-sm font-semibold text-gray-900">
                   {incomeCategory === "subscription"
-                    ? `Abonement - ${
-                        subType === "daily"
-                          ? "Kunlik"
-                          : subType === "monthly"
-                          ? "Oylik"
-                          : "Yillik"
-                      }`
+                    ? "Abonement to'lovi"
                     : incomeCategory === "balance"
-                    ? `Balans - ${
-                        subType === "daily"
-                          ? "Kunlik"
-                          : subType === "monthly"
-                          ? "Oylik"
-                          : "Yillik"
-                      }`
+                    ? (balanceAction === "subtract" ? "Balansdan ayirish" : "Balansni to'ldirish")
                     : `Mahsulot sotish (${selectedProducts.length} ta)`}
                 </p>
               </div>
-              <p className="text-lg font-bold text-emerald-600">
-                {formatPrice(Number(amount) || 0)}
-              </p>
+              {(incomeCategory !== "balance" || Number(amount) > 0) && (
+                <p className="text-lg font-bold text-emerald-600">
+                  {formatPrice(Number(amount) || 0)}
+                </p>
+              )}
             </div>
           </div>
+
+          {/* Balance action toggle (qo'shish / ayirish) */}
+          {incomeCategory === "balance" && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Amal turi
+              </label>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBalanceAction("add")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+                    balanceAction === "add"
+                      ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  )}
+                >
+                  <Plus size={16} />
+                  Qo&apos;shish
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBalanceAction("subtract")}
+                  className={cn(
+                    "flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+                    balanceAction === "subtract"
+                      ? "border-red-600 bg-red-50 text-red-700"
+                      : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                  )}
+                >
+                  <Minus size={16} />
+                  Ayirish
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Member selection - REQUIRED */}
           <div>
