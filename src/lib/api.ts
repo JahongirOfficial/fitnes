@@ -332,6 +332,34 @@ class ApiClient {
   async deleteDebt(id: string) {
     return this.request<any>(`/debts/${id}`, { method: "DELETE" });
   }
+
+  // Notifications
+  async getNotifications(params?: { limit?: number; unreadOnly?: boolean }) {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.unreadOnly) query.set("unreadOnly", "true");
+    return this.request<any>(`/notifications?${query}`);
+  }
+
+  async markNotificationRead(id: string) {
+    return this.request<any>(`/notifications/${id}/read`, { method: "PUT" });
+  }
+
+  async markAllNotificationsRead() {
+    return this.request<any>("/notifications/read-all", { method: "PUT" });
+  }
+
+  async deleteNotification(id: string) {
+    return this.request<any>(`/notifications/${id}`, { method: "DELETE" });
+  }
+
+  async clearReadNotifications() {
+    return this.request<any>("/notifications", { method: "DELETE" });
+  }
+
+  async generateNotifications() {
+    return this.request<any>("/notifications/generate", { method: "POST" });
+  }
 }
 
 export const api = new ApiClient();

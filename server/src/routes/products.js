@@ -6,6 +6,8 @@ import Product from "../models/Product.js";
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
 import Debt from "../models/Debt.js";
+import Notification from "../models/Notification.js";
+import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
 import { uploadProductImage } from "../middleware/upload.js";
 
@@ -180,6 +182,28 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
       createdBy: "Kassir",
     });
     await payment.save();
+
+    // Kam qoldiq bildirishnomasi
+    if (product.stockQuantity <= 5 && product.stockQuantity > 0) {
+      try {
+        const settings = await Settings.findOne();
+        if (settings?.notifications?.lowStock !== false) {
+          const exists = await Notification.findOne({
+            type: "low_stock",
+            productId: product._id,
+            createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+          });
+          if (!exists) {
+            await new Notification({
+              type: "low_stock",
+              title: `${product.name} kam qoldiq!`,
+              description: `Faqat ${product.stockQuantity} ta qoldi`,
+              productId: product._id,
+            }).save();
+          }
+        }
+      } catch (_) { /* notification xatosi asosiy oqimni to'xtatmasin */ }
+    }
 
     res.json({ product, payment });
   } catch (err) {

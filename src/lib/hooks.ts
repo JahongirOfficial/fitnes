@@ -292,3 +292,45 @@ export function useDeleteDebt() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["debts"] }),
   });
 }
+
+// ─── Notifications ──────────────────────────────────────────────────────────
+
+export function useNotifications(params?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["notifications", params],
+    queryFn: () => api.getNotifications(params),
+    refetchInterval: 60000, // Har 1 daqiqada yangilash
+  });
+}
+
+export function useMarkNotificationRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.markNotificationRead(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
+export function useMarkAllNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.markAllNotificationsRead(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deleteNotification(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}
+
+export function useGenerateNotifications() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => api.generateNotifications(),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["notifications"] }),
+  });
+}

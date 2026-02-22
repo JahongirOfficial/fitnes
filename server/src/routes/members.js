@@ -1,6 +1,8 @@
 import { Router } from "express";
 import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
+import Notification from "../models/Notification.js";
+import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
 import QRCode from "qrcode";
 
@@ -129,6 +131,19 @@ router.post("/", verifyToken, async (req, res) => {
       });
       await payment.save();
     }
+
+    // Yangi a'zo bildirishnomasi
+    try {
+      const settings = await Settings.findOne();
+      if (settings?.notifications?.newMember) {
+        await new Notification({
+          type: "new_member",
+          title: "Yangi a'zo qo'shildi",
+          description: `${member.fullName} ro'yxatdan o'tdi`,
+          memberId: member._id,
+        }).save();
+      }
+    } catch (_) { /* notification xatosi asosiy oqimni to'xtatmasin */ }
 
     res.status(201).json(member);
   } catch (err) {

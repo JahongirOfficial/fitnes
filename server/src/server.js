@@ -14,6 +14,7 @@ import reportRoutes from "./routes/reports.js";
 import settingsRoutes from "./routes/settings.js";
 import dashboardRoutes from "./routes/dashboard.js";
 import debtRoutes from "./routes/debts.js";
+import notificationRoutes from "./routes/notifications.js";
 import botRoutes from "./routes/bot.js";
 import { startTelegramBot } from "./bot.js";
 
@@ -39,6 +40,7 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/debts", debtRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/api/bot", botRoutes);
 
 // Root route

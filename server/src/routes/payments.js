@@ -3,6 +3,7 @@ import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
 import Debt from "../models/Debt.js";
 import Settings from "../models/Settings.js";
+import Notification from "../models/Notification.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -176,6 +177,23 @@ router.post("/", verifyToken, async (req, res) => {
 
     const payment = new Payment(req.body);
     await payment.save();
+
+    // To'lov bildirishnomasi
+    if (type === "income" && memberId) {
+      try {
+        const settings = await Settings.findOne();
+        if (settings?.notifications?.paymentConfirmation) {
+          const memberName = req.body.memberName || "Noma'lum";
+          await new Notification({
+            type: "payment",
+            title: "To'lov qabul qilindi",
+            description: `${memberName} — ${Number(amount).toLocaleString("uz-UZ")} so'm`,
+            memberId,
+          }).save();
+        }
+      } catch (_) { /* notification xatosi asosiy oqimni to'xtatmasin */ }
+    }
+
     res.status(201).json(payment);
   } catch (err) {
     res.status(500).json({ message: err.message });

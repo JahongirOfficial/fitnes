@@ -15,9 +15,22 @@ import {
   AlertTriangle,
   CreditCard,
   Menu,
+  Package,
+  CheckCheck,
+  Trash2,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { api } from "@/lib/api";
+import {
+  useNotifications,
+  useMarkNotificationRead,
+  useMarkAllNotificationsRead,
+  useDeleteNotification,
+  useGenerateNotifications,
+} from "@/lib/hooks";
 
 interface HeaderProps {
   collapsed: boolean;
@@ -40,48 +53,38 @@ const pageTitles: Record<string, { title: string; subtitle: string }> = {
   },
 };
 
-const notifications = [
-  {
-    id: 1,
-    icon: AlertTriangle,
-    iconBg: "bg-red-100",
-    iconColor: "text-red-600",
-    title: "Protein Bar kam qoldiq!",
-    desc: "Faqat 2 ta qoldi (min: 5)",
-    time: "5 daqiqa oldin",
-    unread: true,
-  },
-  {
-    id: 2,
-    icon: UserPlus,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
-    title: "Yangi a'zo qo'shildi",
-    desc: "Umarova Madina ro'yxatdan o'tdi",
-    time: "30 daqiqa oldin",
-    unread: true,
-  },
-  {
-    id: 3,
-    icon: CreditCard,
-    iconBg: "bg-emerald-100",
-    iconColor: "text-emerald-600",
-    title: "To'lov qabul qilindi",
-    desc: "Azimov Sardor - 300,000 so'm",
-    time: "1 soat oldin",
-    unread: false,
-  },
-  {
-    id: 4,
-    icon: Clock,
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-    title: "Abonement muddati tugayapti",
-    desc: "Toshmatov Bekzod - 3 kun qoldi",
-    time: "2 soat oldin",
-    unread: false,
-  },
-];
+// Notification turiga qarab ikon va rang
+function getNotifStyle(type: string) {
+  switch (type) {
+    case "subscription_expiry":
+      return { icon: Clock, iconBg: "bg-amber-100", iconColor: "text-amber-600" };
+    case "low_stock":
+      return { icon: AlertTriangle, iconBg: "bg-red-100", iconColor: "text-red-600" };
+    case "new_member":
+      return { icon: UserPlus, iconBg: "bg-blue-100", iconColor: "text-blue-600" };
+    case "payment":
+      return { icon: CreditCard, iconBg: "bg-emerald-100", iconColor: "text-emerald-600" };
+    case "debt":
+      return { icon: Package, iconBg: "bg-purple-100", iconColor: "text-purple-600" };
+    default:
+      return { icon: Bell, iconBg: "bg-gray-100", iconColor: "text-gray-600" };
+  }
+}
+
+// Vaqt formatlash (necha daqiqa/soat/kun oldin)
+function timeAgo(date: string): string {
+  const now = new Date();
+  const d = new Date(date);
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "Hozirgina";
+  if (diffMin < 60) return `${diffMin} daqiqa oldin`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour} soat oldin`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay} kun oldin`;
+  return d.toLocaleDateString("uz-UZ");
+}
 
 export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
   const pathname = usePathname();
@@ -93,8 +96,29 @@ export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
 
+  const queryClient = useQueryClient();
+
+  // Real notification hooks
+  const { data: notifData, isLoading: notifLoading } = useNotifications({ limit: 20 });
+  const markRead = useMarkNotificationRead();
+  const markAllRead = useMarkAllNotificationsRead();
+  const deleteNotif = useDeleteNotification();
+  const generateNotifs = useGenerateNotifications();
+
+  const notifications = notifData?.notifications || [];
+  const unreadCount = notifData?.unreadCount || 0;
+
+  // Dropdown ochilganda avtomatik generate qilish (har safar emas, faqat birinchi marta)
+  const hasGenerated = useRef(false);
+  useEffect(() => {
+    if (showNotifications && !hasGenerated.current) {
+      hasGenerated.current = true;
+      generateNotifs.mutate();
+    }
+  }, [showNotifications]);
+
   const userInitials = user?.fullName
-    ? user.fullName.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
+    ? user.fullName.split(" ").map((w: string) => w[0]).join("").toUpperCase().slice(0, 2)
     : "AD";
 
   const roleLabels: Record<string, string> = {
@@ -107,7 +131,6 @@ export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
     title: "FitnessPro",
     subtitle: "",
   };
-  const unreadCount = notifications.filter((n) => n.unread).length;
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -125,6 +148,19 @@ export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleMarkRead = (id: string) => {
+    markRead.mutate(id);
+  };
+
+  const handleMarkAllRead = () => {
+    markAllRead.mutate();
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteNotif.mutate(id);
   };
 
   return (
@@ -189,64 +225,127 @@ export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
             <Bell size={18} className="text-gray-600" />
             {unreadCount > 0 && (
               <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] flex items-center justify-center bg-red-500 text-white text-[10px] font-bold rounded-full px-1">
-                {unreadCount}
+                {unreadCount > 9 ? "9+" : unreadCount}
               </span>
             )}
           </button>
 
           {/* Notifications Dropdown */}
           {showNotifications && (
-            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-80 max-w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-scale-in z-50">
+            <div className="absolute right-0 top-full mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-96 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden animate-scale-in z-50">
+              {/* Header */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                 <h3 className="text-sm font-semibold text-gray-900">
                   Bildirishnomalar
                 </h3>
-                {unreadCount > 0 && (
-                  <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
-                    {unreadCount} ta yangi
-                  </span>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllRead}
+                      disabled={markAllRead.isPending}
+                      className="text-xs font-medium text-blue-600 hover:text-blue-700 transition flex items-center gap-1"
+                    >
+                      {markAllRead.isPending ? (
+                        <Loader2 className="w-3 h-3 animate-spin" />
+                      ) : (
+                        <CheckCheck className="w-3.5 h-3.5" />
+                      )}
+                      Barchasini o&apos;qish
+                    </button>
+                  )}
+                  {unreadCount > 0 && (
+                    <span className="text-xs font-medium text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full">
+                      {unreadCount}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Notification list */}
+              <div className="max-h-80 overflow-y-auto">
+                {notifLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    <span className="ml-2 text-sm text-gray-500">Yuklanmoqda...</span>
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="flex flex-col items-center py-8 text-center">
+                    <Bell className="w-8 h-8 text-gray-200 mb-2" />
+                    <p className="text-sm text-gray-400">Bildirishnomalar yo&apos;q</p>
+                    <p className="text-xs text-gray-300 mt-0.5">Yangi xabarlar shu yerda ko&apos;rinadi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif: any) => {
+                    const style = getNotifStyle(notif.type);
+                    const Icon = style.icon;
+                    return (
+                      <div
+                        key={notif._id}
+                        onClick={() => !notif.read && handleMarkRead(notif._id)}
+                        className={cn(
+                          "group flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0",
+                          !notif.read && "bg-blue-50/30"
+                        )}
+                      >
+                        <div
+                          className={cn(
+                            "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
+                            style.iconBg
+                          )}
+                        >
+                          <Icon className={cn("w-4 h-4", style.iconColor)} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {notif.title}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                            {notif.description}
+                          </p>
+                          <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {timeAgo(notif.createdAt)}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {!notif.read && (
+                            <span className="w-2 h-2 rounded-full bg-blue-500 mt-2" />
+                          )}
+                          <button
+                            onClick={(e) => handleDelete(e, notif._id)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-500"
+                            title="O'chirish"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
                 )}
               </div>
-              <div className="max-h-80 overflow-y-auto">
-                {notifications.map((notif) => (
-                  <div
-                    key={notif.id}
-                    className={cn(
-                      "flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer border-b border-gray-50 last:border-0",
-                      notif.unread && "bg-blue-50/30"
-                    )}
-                  >
-                    <div
-                      className={cn(
-                        "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 mt-0.5",
-                        notif.iconBg
-                      )}
+
+              {/* Footer */}
+              {notifications.length > 0 && (
+                <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-between">
+                  <span className="text-[10px] text-gray-400">
+                    Jami: {notifications.length} ta
+                  </span>
+                  {notifications.some((n: any) => n.read) && (
+                    <button
+                      onClick={() => {
+                        api.clearReadNotifications().then(() => {
+                          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+                        });
+                      }}
+                      className="text-[10px] font-medium text-red-500 hover:text-red-600 transition flex items-center gap-1"
                     >
-                      <notif.icon className={cn("w-4 h-4", notif.iconColor)} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {notif.title}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {notif.desc}
-                      </p>
-                      <p className="text-[10px] text-gray-400 mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {notif.time}
-                      </p>
-                    </div>
-                    {notif.unread && (
-                      <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-2" />
-                    )}
-                  </div>
-                ))}
-              </div>
-              <div className="px-4 py-2.5 border-t border-gray-100">
-                <button className="w-full text-center text-xs font-medium text-blue-600 hover:text-blue-700 transition">
-                  Barchasini ko&#39;rish
-                </button>
-              </div>
+                      <Trash2 className="w-3 h-3" />
+                      O&apos;qilganlarni tozalash
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
