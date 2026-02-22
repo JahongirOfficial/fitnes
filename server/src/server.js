@@ -145,7 +145,7 @@ mongoose
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
-    startTelegramBot();
+    startTelegramBot().catch(console.error);
 
     // Avtomatik qarz tekshiruvi: start da + har 6 soatda
     checkExpiredSubscriptions();

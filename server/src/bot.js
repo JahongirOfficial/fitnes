@@ -189,12 +189,21 @@ async function checkExpiryNotifications(bot) {
   }
 }
 
-export function startTelegramBot() {
+export async function startTelegramBot() {
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) {
     console.log("TELEGRAM_BOT_TOKEN topilmadi, bot ishga tushmaydi");
     return;
   }
+
+  // Eski polling sessiyalarni tozalash (409 Conflict oldini olish)
+  try {
+    const clearRes = await fetch(
+      `https://api.telegram.org/bot${token}/deleteWebhook?drop_pending_updates=true`
+    );
+    const clearData = await clearRes.json();
+    if (clearData.ok) console.log("[Bot] Eski Telegram sessiya tozalandi");
+  } catch (_) {}
 
   const bot = new TelegramBot(token, { polling: true });
   console.log("Telegram bot ishga tushdi");
