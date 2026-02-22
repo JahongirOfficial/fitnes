@@ -152,38 +152,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// PUT /api/members/:id - Update member
-router.put("/:id", verifyToken, async (req, res) => {
-  try {
-    const updateData = { ...req.body };
-
-    // Recalculate status if subscription changed
-    if (updateData.subscription && updateData.subscription.endDate) {
-      const endDate = new Date(updateData.subscription.endDate);
-      updateData.status = endDate >= new Date() ? "active" : "expired";
-      updateData.subscription.status = updateData.status === "active" ? "active" : "expired";
-    }
-
-    const member = await Member.findByIdAndUpdate(req.params.id, updateData, { new: true });
-    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
-    res.json(member);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// DELETE /api/members/:id - Delete member
-router.delete("/:id", verifyToken, async (req, res) => {
-  try {
-    const member = await Member.findByIdAndDelete(req.params.id);
-    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
-    res.json({ message: "A'zo o'chirildi" });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// PUT /api/members/:id/deactivate - Nofaolga o'tkazish
+// PUT /api/members/:id/deactivate - Nofaolga o'tkazish (/:id DAN OLDIN bo'lishi shart)
 router.put("/:id/deactivate", verifyToken, async (req, res) => {
   try {
     const member = await Member.findById(req.params.id);
@@ -242,6 +211,37 @@ router.put("/:id/activate", verifyToken, async (req, res) => {
     // Faqat status o'zgartiriladi, lekin qarz avtomatik o'chirilmaydi
 
     res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/members/:id - Update member
+router.put("/:id", verifyToken, async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+
+    // Recalculate status if subscription changed
+    if (updateData.subscription && updateData.subscription.endDate) {
+      const endDate = new Date(updateData.subscription.endDate);
+      updateData.status = endDate >= new Date() ? "active" : "expired";
+      updateData.subscription.status = updateData.status === "active" ? "active" : "expired";
+    }
+
+    const member = await Member.findByIdAndUpdate(req.params.id, updateData, { new: true });
+    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// DELETE /api/members/:id - Delete member
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const member = await Member.findByIdAndDelete(req.params.id);
+    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+    res.json({ message: "A'zo o'chirildi" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

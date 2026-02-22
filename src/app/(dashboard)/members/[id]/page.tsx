@@ -29,6 +29,7 @@ import {
 import { useMember, useMemberPayments, useMemberVisits, useMemberDebts, useDeactivateMember, useActivateMember } from "@/lib/hooks";
 import { useToast } from "@/components/ui/Toast";
 import ActivateModal from "@/components/members/ActivateModal";
+import Modal from "@/components/ui/Modal";
 import {
   cn,
   formatCurrency,
@@ -153,6 +154,7 @@ export default function MemberProfilePage() {
   const [activeTab, setActiveTab] = useState<TabType>("payments");
   const [paymentPage, setPaymentPage] = useState(1);
   const [activateModalOpen, setActivateModalOpen] = useState(false);
+  const [deactivateModalOpen, setDeactivateModalOpen] = useState(false);
 
   // Ma'lumotlarni yuklash
   const { data: member, isLoading: memberLoading } = useMember(id);
@@ -176,10 +178,10 @@ export default function MemberProfilePage() {
   const activateMember = useActivateMember();
 
   const handleDeactivate = async () => {
-    if (!confirm(`${member?.fullName} ni nofaolga o'tkazmoqchimisiz? Nofaol a'zo zalga kira olmaydi.`)) return;
     try {
       await deactivateMember.mutateAsync(id);
       toast("success", "A'zo nofaolga o'tkazildi");
+      setDeactivateModalOpen(false);
     } catch (err: any) {
       toast("error", err.message || "Xatolik yuz berdi");
     }
@@ -320,12 +322,10 @@ export default function MemberProfilePage() {
               <span>Abonement muddati tugagan. A&apos;zo nofaolga o&apos;tkazilishi yoki abonement yangilanishi kerak.</span>
             </div>
             <button
-              onClick={handleDeactivate}
-              disabled={deactivateMember.isPending}
+              onClick={() => setDeactivateModalOpen(true)}
               className={cn(
                 "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-                "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200",
-                "disabled:opacity-50 disabled:cursor-not-allowed"
+                "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
               )}
             >
               <UserX className="h-4 w-4" />
@@ -524,6 +524,51 @@ export default function MemberProfilePage() {
         onSubmit={handleActivate}
         member={member}
       />
+
+      {/* ────── DeactivateConfirmModal ────── */}
+      <Modal
+        isOpen={deactivateModalOpen}
+        onClose={() => setDeactivateModalOpen(false)}
+        title="Nofaolga o'tkazish"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setDeactivateModalOpen(false)}
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+            >
+              Bekor qilish
+            </button>
+            <button
+              onClick={handleDeactivate}
+              disabled={deactivateMember.isPending}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {deactivateMember.isPending ? (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <UserX size={16} />
+              )}
+              Nofaolga o&apos;tkazish
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 p-4 bg-red-50 rounded-xl">
+            <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0">
+              <UserX className="w-5 h-5 text-red-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-gray-900">{member?.fullName}</p>
+              <p className="text-xs text-gray-500 mt-0.5">nofaol holatga o&apos;tkaziladi</p>
+            </div>
+          </div>
+          <p className="text-sm text-gray-600">
+            Nofaol a&apos;zo QR kod orqali zalga kira olmaydi. Keyinchalik abonement yangilab qayta faollashtirish mumkin.
+          </p>
+        </div>
+      </Modal>
     </div>
   );
 }
