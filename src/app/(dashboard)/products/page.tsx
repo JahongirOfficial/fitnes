@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Plus,
   Package,
@@ -36,6 +37,7 @@ function formatPrice(amount: number): string {
 }
 
 export default function ProductsPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState<Category>("all");
@@ -225,8 +227,9 @@ export default function ProductsPage() {
             return (
               <div
                 key={product._id}
+                onClick={() => router.push(`/products/${product._id}`)}
                 className={cn(
-                  "bg-white rounded-2xl p-4 sm:p-5 card-hover-lg",
+                  "bg-white rounded-2xl p-4 sm:p-5 card-hover-lg cursor-pointer",
                   "border border-gray-100 relative overflow-hidden animate-fade-in"
                 )}
                 style={{ animationDelay: `${idx * 60}ms` }}
@@ -285,7 +288,7 @@ export default function ProductsPage() {
                 </div>
                 <div className="flex items-center gap-2 mt-4 pt-4 border-t border-gray-100">
                   <button
-                    onClick={() => openSellProduct(product)}
+                    onClick={(e) => { e.stopPropagation(); openSellProduct(product); }}
                     className={cn(
                       "flex-1 inline-flex items-center justify-center gap-1.5",
                       "px-4 py-2 rounded-xl text-sm font-semibold",
@@ -297,14 +300,14 @@ export default function ProductsPage() {
                     Sotish
                   </button>
                   <button
-                    onClick={() => openEditProduct(product)}
+                    onClick={(e) => { e.stopPropagation(); openEditProduct(product); }}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-400 hover:bg-blue-50 hover:text-blue-600 transition-all"
                     title="Tahrirlash"
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
                   <button
-                    onClick={() => handleDeleteProduct(product)}
+                    onClick={(e) => { e.stopPropagation(); handleDeleteProduct(product); }}
                     className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-gray-400 hover:bg-red-50 hover:text-red-600 transition-all"
                     title="O'chirish"
                   >

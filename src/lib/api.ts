@@ -207,6 +207,14 @@ class ApiClient {
     });
   }
 
+  async getProduct(id: string) {
+    return this.request<any>(`/products/${id}`);
+  }
+
+  async getProductHistory(id: string) {
+    return this.request<any>(`/products/${id}/history`);
+  }
+
   async deleteProduct(id: string) {
     return this.request<any>(`/products/${id}`, { method: "DELETE" });
   }

@@ -44,10 +44,27 @@ export function useSellProduct() {
       api.sellProduct(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["product-history"] });
       qc.invalidateQueries({ queryKey: ["payments"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
       qc.invalidateQueries({ queryKey: ["members"] });
     },
+  });
+}
+
+export function useProduct(id: string) {
+  return useQuery({
+    queryKey: ["product", id],
+    queryFn: () => api.getProduct(id),
+    enabled: !!id,
+  });
+}
+
+export function useProductHistory(id: string) {
+  return useQuery({
+    queryKey: ["product-history", id],
+    queryFn: () => api.getProductHistory(id),
+    enabled: !!id,
   });
 }
 

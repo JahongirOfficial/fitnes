@@ -4,6 +4,7 @@ const paymentSchema = new mongoose.Schema(
   {
     memberId: { type: mongoose.Schema.Types.ObjectId, ref: "Member" },
     memberName: { type: String },
+    productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
     type: { type: String, enum: ["income", "expense"], required: true },
     category: {
       type: String,
@@ -24,5 +25,6 @@ const paymentSchema = new mongoose.Schema(
 
 paymentSchema.index({ createdAt: -1 });
 paymentSchema.index({ type: 1, createdAt: -1 });
+paymentSchema.index({ productId: 1, createdAt: -1 });
 
 export default mongoose.model("Payment", paymentSchema);

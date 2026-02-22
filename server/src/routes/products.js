@@ -6,6 +6,7 @@ import Product from "../models/Product.js";
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
 import Debt from "../models/Debt.js";
+import StockMovement from "../models/StockMovement.js";
 import Notification from "../models/Notification.js";
 import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
@@ -63,6 +64,20 @@ router.post("/", verifyToken, uploadProductImage.single("image"), async (req, re
 
     const product = new Product(data);
     await product.save();
+
+    // Boshlang'ich zaxira qaydnomasi
+    if (data.stockQuantity > 0) {
+      await new StockMovement({
+        productId: product._id,
+        type: "restock",
+        quantity: data.stockQuantity,
+        previousStock: 0,
+        newStock: data.stockQuantity,
+        description: "Boshlang'ich zaxira (mahsulot yaratish)",
+        createdBy: "Admin",
+      }).save();
+    }
+
     res.status(201).json(product);
   } catch (err) {
     if (req.file) removeImageFile(`/uploads/products/${req.file.filename}`);
@@ -93,6 +108,24 @@ router.put("/:id", verifyToken, uploadProductImage.single("image"), async (req, 
       data.image = null;
     }
 
+    // Zaxira o'zgargan bo'lsa qayd yaratish
+    const oldStock = existing.stockQuantity;
+    const newStock = data.stockQuantity;
+    if (oldStock !== newStock) {
+      const diff = newStock - oldStock;
+      await new StockMovement({
+        productId: existing._id,
+        type: diff > 0 ? "restock" : "adjustment",
+        quantity: diff,
+        previousStock: oldStock,
+        newStock: newStock,
+        description: diff > 0
+          ? `${diff} ta to'ldirildi`
+          : `${Math.abs(diff)} ta tuzatish (kamaytirildi)`,
+        createdBy: "Admin",
+      }).save();
+    }
+
     const product = await Product.findByIdAndUpdate(req.params.id, data, { new: true });
     res.json(product);
   } catch (err) {
@@ -110,6 +143,80 @@ router.delete("/:id", verifyToken, async (req, res) => {
       await Product.findByIdAndDelete(req.params.id);
     }
     res.json({ message: "Mahsulot o'chirildi" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/products/:id/history — Mahsulot tarixi
+router.get("/:id/history", verifyToken, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Mahsulot topilmadi" });
+
+    // Sotuvlar (Payment jadvalidan)
+    const sales = await Payment.find({
+      productId: product._id,
+      category: "product",
+    }).sort({ createdAt: -1 }).limit(100);
+
+    // Zaxira harakatlari
+    const stockMovements = await StockMovement.find({
+      productId: product._id,
+    }).sort({ createdAt: -1 }).limit(100);
+
+    // Bugungi sotuv
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todaySales = await Payment.find({
+      productId: product._id,
+      category: "product",
+      createdAt: { $gte: today },
+    });
+
+    // Statistika
+    const allSales = await Payment.find({
+      productId: product._id,
+      category: "product",
+    });
+
+    const totalSold = allSales.reduce((sum, s) => {
+      // Descriptiondan miqdorni olish: "Name x5 sotildi"
+      const match = s.description?.match(/x(\d+)/);
+      return sum + (match ? Number(match[1]) : 1);
+    }, 0);
+
+    const todaySoldCount = todaySales.reduce((sum, s) => {
+      const match = s.description?.match(/x(\d+)/);
+      return sum + (match ? Number(match[1]) : 1);
+    }, 0);
+
+    const totalRevenue = allSales.reduce((sum, s) => sum + s.amount, 0);
+    const totalCost = totalSold * (product.costPrice || 0);
+
+    res.json({
+      product,
+      sales,
+      stockMovements,
+      stats: {
+        totalSold,
+        todaySold: todaySoldCount,
+        totalRevenue,
+        profit: totalRevenue - totalCost,
+        todayRevenue: todaySales.reduce((sum, s) => sum + s.amount, 0),
+      },
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// GET /api/products/:id — Bitta mahsulot
+router.get("/:id", verifyToken, async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Mahsulot topilmadi" });
+    res.json(product);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -167,13 +274,28 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
       }
     }
 
+    const previousStock = product.stockQuantity;
     product.stockQuantity -= quantity;
     await product.save();
 
-    // Create payment record
+    // StockMovement qayd
+    await new StockMovement({
+      productId: product._id,
+      type: "sale",
+      quantity: -quantity,
+      previousStock,
+      newStock: product.stockQuantity,
+      description: `${product.name} x${quantity} sotildi`,
+      memberId: memberId || undefined,
+      memberName: memberName || undefined,
+      createdBy: "Kassir",
+    }).save();
+
+    // Payment yaratish (productId bilan)
     const payment = new Payment({
       memberId,
       memberName,
+      productId: product._id,
       type: "income",
       category: "product",
       amount: product.price * quantity,
