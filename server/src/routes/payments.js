@@ -5,6 +5,14 @@ import Debt from "../models/Debt.js";
 import Settings from "../models/Settings.js";
 import Notification from "../models/Notification.js";
 import { verifyToken } from "../middleware/auth.js";
+import { sendTgNotify } from "../tgNotify.js";
+
+const payMethodLabel = {
+  cash: "Naqd",
+  card: "Karta",
+  transfer: "O'tkazma",
+  balance: "Balans",
+};
 
 const router = Router();
 
@@ -178,7 +186,7 @@ router.post("/", verifyToken, async (req, res) => {
     const payment = new Payment(req.body);
     await payment.save();
 
-    // To'lov bildirishnomasi
+    // To'lov bildirishnomasi (CRM ichki)
     if (type === "income" && memberId) {
       try {
         const settings = await Settings.findOne();
@@ -192,6 +200,56 @@ router.post("/", verifyToken, async (req, res) => {
           }).save();
         }
       } catch (_) { /* notification xatosi asosiy oqimni to'xtatmasin */ }
+    }
+
+    // Telegram bildirishnomasi (ulangan a'zoga)
+    if (memberId) {
+      try {
+        const memberDoc = await Member.findById(memberId);
+        const tgId = memberDoc?.telegramChatId;
+        if (tgId) {
+          let tgMsg = null;
+
+          // Balans to'ldirilganda
+          if (category === "balance" && balanceAction !== "subtract" && paymentMethod !== "balance") {
+            const newBalance = (memberDoc.balance || 0);
+            tgMsg =
+              `💰 *Balansingiz to'ldirildi!*\n\n` +
+              `💵 Qo'shildi: *${Number(amount).toLocaleString("uz-UZ")} so'm*\n` +
+              `💳 Joriy balans: *${Number(newBalance).toLocaleString("uz-UZ")} so'm*`;
+          }
+
+          // Abonement to'langanida
+          if (category === "subscription") {
+            const updatedMember = await Member.findById(memberId);
+            const endDate = updatedMember?.subscription?.endDate;
+            const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
+            const sLabel = subLabels[subType || updatedMember?.subscription?.type] || "Oylik";
+            const endStr = endDate
+              ? new Date(endDate).toLocaleDateString("uz-UZ", { year: "numeric", month: "2-digit", day: "2-digit" })
+              : "—";
+            tgMsg =
+              `✅ *Abonement yangilandi!*\n\n` +
+              `📋 Tur: *${sLabel}*\n` +
+              `📅 Tugash sanasi: *${endStr}*\n` +
+              `💵 To'landi: *${Number(amount).toLocaleString("uz-UZ")} so'm*`;
+          }
+
+          // Mahsulot xarid qilinganida
+          if (category === "product") {
+            const desc = req.body.description || "Mahsulot";
+            tgMsg =
+              `🛒 *Yangi xarid!*\n\n` +
+              `📦 ${desc}\n` +
+              `💵 Summa: *${Number(amount).toLocaleString("uz-UZ")} so'm*\n` +
+              `💳 To'lov usuli: ${payMethodLabel[paymentMethod] || paymentMethod}`;
+          }
+
+          if (tgMsg) {
+            await sendTgNotify(tgId, tgMsg);
+          }
+        }
+      } catch (_) { /* Telegram xatosi asosiy oqimni to'xtatmasin */ }
     }
 
     res.status(201).json(payment);
