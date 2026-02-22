@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Search,
   UserPlus,
-  Eye,
   Pencil,
   Trash2,
   LayoutGrid,
@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Users,
   Wallet,
+  Eye,
 } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import { useMembers, useCreateMember, useUpdateMember, useDeleteMember } from "@/lib/hooks";
@@ -99,6 +100,7 @@ function formatPhone(phone: string): string {
 const ITEMS_PER_PAGE = 10;
 
 export default function MembersPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -339,7 +341,7 @@ export default function MembersPage() {
                   </tr>
                 ) : (
                   members.map((member, idx) => (
-                    <tr key={member._id} className="transition-colors hover:bg-gray-50">
+                    <tr key={member._id} className="transition-colors hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/members/${member._id}`)}>
                       <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500">
                         {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
                       </td>
@@ -386,7 +388,7 @@ export default function MembersPage() {
                             : "0"}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
                           onClick={() => openPayment(member)}
@@ -396,9 +398,9 @@ export default function MembersPage() {
                           To&apos;lov
                         </button>
                       </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4" onClick={(e) => e.stopPropagation()}>
                         <div className="flex items-center gap-2">
-                          <button type="button" title="Ko'rish" onClick={() => openView(member)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
+                          <button type="button" title="Ko'rish" onClick={() => router.push(`/members/${member._id}`)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
                             <Eye className="h-4 w-4" />
                           </button>
                           <button type="button" title="Tahrirlash" onClick={() => openEdit(member)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-yellow-50 hover:text-yellow-600">
@@ -463,7 +465,7 @@ export default function MembersPage() {
             </div>
           ) : (
             members.map((member) => (
-              <div key={member._id} className="rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md">
+              <div key={member._id} className="rounded-2xl bg-white p-5 shadow-sm transition-shadow hover:shadow-md cursor-pointer" onClick={() => router.push(`/members/${member._id}`)}>
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
@@ -507,13 +509,13 @@ export default function MembersPage() {
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 border-t border-gray-100 pt-3">
+                <div className="flex items-center gap-2 border-t border-gray-100 pt-3" onClick={(e) => e.stopPropagation()}>
                   <button type="button" onClick={() => openPayment(member)} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100">
                     <Wallet className="h-3.5 w-3.5" />
                     To&apos;lov
                   </button>
                   <div className="ml-auto flex items-center gap-1">
-                    <button type="button" title="Ko'rish" onClick={() => openView(member)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
+                    <button type="button" title="Ko'rish" onClick={() => router.push(`/members/${member._id}`)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
                       <Eye className="h-4 w-4" />
                     </button>
                     <button type="button" title="Tahrirlash" onClick={() => openEdit(member)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-yellow-50 hover:text-yellow-600">

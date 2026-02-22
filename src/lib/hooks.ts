@@ -132,10 +132,42 @@ export function useCreatePayment() {
 
 // ─── Visits ──────────────────────────────────────────────────────────────────
 
-export function useVisits(date?: string) {
+export function useVisits(params?: { date?: string; memberId?: string; limit?: number }) {
   return useQuery({
-    queryKey: ["visits", date],
-    queryFn: () => api.getVisits(date),
+    queryKey: ["visits", params],
+    queryFn: () => api.getVisits(params),
+  });
+}
+
+export function useMember(id: string) {
+  return useQuery({
+    queryKey: ["member", id],
+    queryFn: () => api.getMember(id),
+    enabled: !!id,
+  });
+}
+
+export function useMemberPayments(memberId: string, params?: { page?: number; limit?: number }) {
+  return useQuery({
+    queryKey: ["payments", { memberId, ...params }],
+    queryFn: () => api.getPayments({ memberId, ...params }),
+    enabled: !!memberId,
+  });
+}
+
+export function useMemberVisits(memberId: string, params?: { limit?: number }) {
+  return useQuery({
+    queryKey: ["visits", { memberId, ...params }],
+    queryFn: () => api.getVisits({ memberId, ...params }),
+    enabled: !!memberId,
+  });
+}
+
+export function useMemberDebts(memberId: string) {
+  return useQuery({
+    queryKey: ["debts", { memberId }],
+    queryFn: () => api.getDebts({ memberId }),
+    enabled: !!memberId,
   });
 }
 

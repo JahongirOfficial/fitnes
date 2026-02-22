@@ -74,7 +74,7 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
   // Debounced search
   useEffect(() => {
     if (!showDropdown) return;
-    const timer = setTimeout(() => searchMembers(memberSearch), 300);
+    const timer = setTimeout(() => searchMembers(memberSearch), 500);
     return () => clearTimeout(timer);
   }, [memberSearch, showDropdown, searchMembers]);
 
@@ -111,7 +111,7 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
             Bekor qilish
           </button>
           <button onClick={handleSubmit}
-            disabled={isLoading || quantity < 1 || quantity > maxStock || (paymentMethod === "balance" && (!selectedMember || (selectedMember.balance || 0) < totalPrice))}
+            disabled={isLoading || !selectedMember || quantity < 1 || quantity > maxStock || (paymentMethod === "balance" && (selectedMember.balance || 0) < totalPrice)}
             className={cn("inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
               "bg-blue-600 hover:bg-blue-700", "disabled:opacity-50 disabled:cursor-not-allowed")}>
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ShoppingBag size={16} />}
@@ -131,7 +131,7 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
         {/* Member search (optional) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">
-            A&apos;zo (ixtiyoriy)
+            A&apos;zo tanlang *
           </label>
           {selectedMember ? (
             <div className="flex items-center justify-between p-3 bg-blue-50 border border-blue-200 rounded-xl">

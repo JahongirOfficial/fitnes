@@ -10,15 +10,24 @@ const router = Router();
 // GET /api/visits - Today's visits
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const { date } = req.query;
-    const targetDate = date ? new Date(date) : new Date();
-    targetDate.setHours(0, 0, 0, 0);
-    const nextDay = new Date(targetDate);
-    nextDay.setDate(nextDay.getDate() + 1);
+    const { date, memberId, limit: queryLimit } = req.query;
+    const visitFilter = {};
 
-    const visits = await Visit.find({
-      checkInTime: { $gte: targetDate, $lt: nextDay },
-    }).sort({ checkInTime: -1 });
+    if (memberId) {
+      // A'zo bo'yicha barcha tashriflarni olish
+      visitFilter.memberId = memberId;
+    } else {
+      // Sanaga ko'ra (default: bugun)
+      const targetDate = date ? new Date(date) : new Date();
+      targetDate.setHours(0, 0, 0, 0);
+      const nextDay = new Date(targetDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      visitFilter.checkInTime = { $gte: targetDate, $lt: nextDay };
+    }
+
+    let query = Visit.find(visitFilter).sort({ checkInTime: -1 });
+    if (queryLimit) query = query.limit(Number(queryLimit));
+    const visits = await query;
 
     const activeCount = visits.filter((v) => !v.checkOutTime).length;
     const completedVisits = visits.filter((v) => v.checkOutTime && v.duration);

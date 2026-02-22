@@ -67,9 +67,10 @@ function calculateNewEndDate(currentEndDate, subType) {
 // GET /api/payments
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const { type, search, startDate, endDate, page = 1, limit = 20 } = req.query;
+    const { type, search, startDate, endDate, page = 1, limit = 20, memberId } = req.query;
     const filter = {};
 
+    if (memberId) filter.memberId = memberId;
     if (type && type !== "all") filter.type = type;
     if (search) {
       filter.$or = [

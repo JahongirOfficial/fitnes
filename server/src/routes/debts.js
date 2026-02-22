@@ -7,9 +7,10 @@ const router = Router();
 // GET /api/debts - List debts with filters
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const { search, status, page = 1, limit = 20 } = req.query;
+    const { search, status, page = 1, limit = 20, memberId } = req.query;
     const filter = {};
 
+    if (memberId) filter.memberId = memberId;
     if (search) {
       filter.$or = [
         { personName: { $regex: search, $options: "i" } },

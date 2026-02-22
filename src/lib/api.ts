@@ -164,6 +164,8 @@ class ApiClient {
     startDate?: string;
     endDate?: string;
     page?: number;
+    memberId?: string;
+    limit?: number;
   }) {
     const query = new URLSearchParams();
     if (params?.type) query.set("type", params.type);
@@ -171,6 +173,8 @@ class ApiClient {
     if (params?.startDate) query.set("startDate", params.startDate);
     if (params?.endDate) query.set("endDate", params.endDate);
     if (params?.page) query.set("page", String(params.page));
+    if (params?.memberId) query.set("memberId", params.memberId);
+    if (params?.limit) query.set("limit", String(params.limit));
     return this.request<any>(`/payments?${query}`);
   }
 
@@ -230,9 +234,13 @@ class ApiClient {
   }
 
   // Visits
-  async getVisits(date?: string) {
-    const query = date ? `?date=${date}` : "";
-    return this.request<any>(`/visits${query}`);
+  async getVisits(params?: { date?: string; memberId?: string; limit?: number }) {
+    const query = new URLSearchParams();
+    if (params?.date) query.set("date", params.date);
+    if (params?.memberId) query.set("memberId", params.memberId);
+    if (params?.limit) query.set("limit", String(params.limit));
+    const qs = query.toString();
+    return this.request<any>(`/visits${qs ? `?${qs}` : ""}`);
   }
 
   async checkIn(memberId: string) {
@@ -285,12 +293,14 @@ class ApiClient {
     status?: string;
     page?: number;
     limit?: number;
+    memberId?: string;
   }) {
     const query = new URLSearchParams();
     if (params?.search) query.set("search", params.search);
     if (params?.status) query.set("status", params.status);
     if (params?.page) query.set("page", String(params.page));
     if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.memberId) query.set("memberId", params.memberId);
     return this.request<any>(`/debts?${query}`);
   }
 
