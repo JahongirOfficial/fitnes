@@ -198,7 +198,11 @@ function EmptyState({ message }: { message: string }) {
 export default function ReportsPage() {
   const [activePeriod, setActivePeriod] = useState<Period>("monthly");
   const [activeSection, setActiveSection] = useState<SectionTab>("umumiy");
-  const [startDate, setStartDate] = useState("2026-01-01");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() - 6);
+    return d.toISOString().split("T")[0];
+  });
   const [endDate, setEndDate] = useState(new Date().toISOString().split("T")[0]);
 
   const { data: reportData, isLoading } = useReports({ period: activePeriod, startDate, endDate });

@@ -1,4 +1,5 @@
 import { Router } from "express";
+import mongoose from "mongoose";
 import Payment from "../models/Payment.js";
 import Member from "../models/Member.js";
 import Visit from "../models/Visit.js";
@@ -75,10 +76,10 @@ router.get("/", verifyToken, async (req, res) => {
       // Visits trend
       visitsTrendRaw,
 
-      // Top products
+      // Top products (productId orqali)
       topProductsRaw,
 
-      // Products by category
+      // Products by category (productId orqali)
       productsByCategoryRaw,
 
       // Low stock products
@@ -147,7 +148,7 @@ router.get("/", verifyToken, async (req, res) => {
         {
           $group: {
             _id: {
-              date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              date: { $dateToString: { format: "%m-%d", date: "$createdAt" } },
               type: "$type",
             },
             total: { $sum: "$amount" },
@@ -201,12 +202,20 @@ router.get("/", verifyToken, async (req, res) => {
 
       // Visit stats (total + avg duration)
       Visit.aggregate([
-        { $match: { ...visitDateFilter, duration: { $gt: 0 } } },
+        { $match: visitDateFilter },
         {
           $group: {
             _id: null,
             totalVisits: { $sum: 1 },
-            avgDuration: { $avg: "$duration" },
+            avgDuration: {
+              $avg: {
+                $cond: [
+                  { $gt: ["$duration", 0] },
+                  "$duration",
+                  null,
+                ],
+              },
+            },
           },
         },
       ]),
@@ -214,7 +223,7 @@ router.get("/", verifyToken, async (req, res) => {
       // Top visitors
       Visit.aggregate([
         { $match: visitDateFilter },
-        { $group: { _id: "$memberName", visits: { $sum: 1 } } },
+        { $group: { _id: { memberId: "$memberId", name: "$memberName" }, visits: { $sum: 1 } } },
         { $sort: { visits: -1 } },
         { $limit: 10 },
       ]),
@@ -238,64 +247,53 @@ router.get("/", verifyToken, async (req, res) => {
         { $sort: { "_id.year": 1, "_id.month": 1 } },
       ]),
 
-      // Top products
+      // Top products — productId orqali to'g'ri aniqlash
       Payment.aggregate([
-        { $match: { ...dateFilter, category: "product" } },
+        { $match: { ...dateFilter, type: "income", category: "product" } },
         {
-          $addFields: {
-            productName: { $arrayElemAt: [{ $split: ["$description", " x"] }, 0] },
+          $group: {
+            _id: { $ifNull: ["$productId", "$description"] },
+            descriptions: { $push: "$description" },
+            revenue: { $sum: "$amount" },
+            count: { $sum: 1 },
           },
         },
         {
-          $group: {
-            _id: "$productName",
-            sold: { $sum: 1 },
-            revenue: { $sum: "$amount" },
+          $lookup: {
+            from: "products",
+            localField: "_id",
+            foreignField: "_id",
+            as: "product",
           },
         },
         { $sort: { revenue: -1 } },
         { $limit: 10 },
       ]),
 
-      // Products by category
-      Product.aggregate([
+      // Products by category — productId orqali to'g'ri bog'lash
+      Payment.aggregate([
+        { $match: { ...dateFilter, type: "income", category: "product", productId: { $exists: true, $ne: null } } },
         {
           $lookup: {
-            from: "payments",
-            let: { prodName: "$name" },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$category", "product"] },
-                      { $gte: ["$createdAt", start] },
-                      { $lte: ["$createdAt", end] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "sales",
+            from: "products",
+            localField: "productId",
+            foreignField: "_id",
+            as: "product",
           },
         },
+        { $unwind: "$product" },
         {
           $group: {
-            _id: "$category",
-            sold: { $sum: { $size: "$sales" } },
-            revenue: { $sum: { $reduce: { input: "$sales", initialValue: 0, in: { $add: ["$$value", "$$this.amount"] } } } },
+            _id: "$product.category",
+            sold: { $sum: 1 },
+            revenue: { $sum: "$amount" },
           },
         },
         { $sort: { revenue: -1 } },
       ]),
 
       // Low stock products
-      Product.find({
-        $or: [
-          { $expr: { $lte: ["$stockQuantity", { $ifNull: ["$minStockAlert", 5] }] } },
-          { stockQuantity: { $lte: 5 } },
-        ],
-      })
+      Product.find()
         .select("name stockQuantity minStockAlert category")
         .sort({ stockQuantity: 1 })
         .lean(),
@@ -332,10 +330,9 @@ router.get("/", verifyToken, async (req, res) => {
       fill: categoryLabels[item._id]?.fill || "#6b7280",
     }));
 
-    // Payment methods
-    const methodLabels = { cash: "Naqd", card: "Karta", transfer: "O'tkazma", balance: "Balans" };
+    // Payment methods — raw kalitlarni saqlash (frontend o'zi tarjima qiladi)
     const paymentMethods = paymentMethodsRaw.map((pm) => ({
-      method: methodLabels[pm._id] || pm._id,
+      method: pm._id || "cash",
       total: pm.total,
       count: pm.count,
     }));
@@ -360,7 +357,7 @@ router.get("/", verifyToken, async (req, res) => {
       }
       dailyMap[item._id.date][item._id.type] = item.total;
     });
-    const dailyIncome = Object.values(dailyMap).slice(-30); // Last 30 days max
+    const dailyIncome = Object.values(dailyMap).slice(-30);
 
     // Members by status
     const statusMap = {};
@@ -389,7 +386,10 @@ router.get("/", verifyToken, async (req, res) => {
     const vs = visitStatsRaw[0] || { totalVisits: 0, avgDuration: 0 };
 
     // Top visitors
-    const topVisitors = topVisitorsRaw.map((v) => ({ name: v._id, visits: v.visits }));
+    const topVisitors = topVisitorsRaw.map((v) => ({
+      name: v._id?.name || "Noma'lum",
+      visits: v.visits,
+    }));
 
     // Visits by weekday
     const weekDayNames = ["Yak", "Dush", "Sesh", "Chor", "Pay", "Jum", "Shan"];
@@ -404,12 +404,25 @@ router.get("/", verifyToken, async (req, res) => {
       visits: item.visits,
     }));
 
-    // Top products
-    const topProducts = topProductsRaw.map((p) => ({
-      name: p._id || "Noma'lum",
-      sold: p.sold,
-      revenue: p.revenue,
-    }));
+    // Top products — nom aniqlash
+    const topProducts = topProductsRaw.map((p) => {
+      // productId bilan bog'langan bo'lsa, product nomini olish
+      const productDoc = p.product?.[0];
+      let name = productDoc?.name;
+      if (!name) {
+        // Descriptiondan nom olish: "Coca-Cola x3 sotildi" -> "Coca-Cola"
+        const desc = p.descriptions?.[0] || "";
+        const match = desc.match(/^(.+?)\s+x\d+/);
+        name = match ? match[1] : (typeof p._id === "string" ? p._id : "Noma'lum");
+      }
+      // Sotilgan miqdorni hisoblash
+      let totalSold = 0;
+      (p.descriptions || []).forEach((d) => {
+        const qMatch = d?.match(/x(\d+)/);
+        totalSold += qMatch ? Number(qMatch[1]) : 1;
+      });
+      return { name, sold: totalSold, revenue: p.revenue };
+    });
 
     // Products by category
     const prodCatLabels = { drink: "Ichimliklar", chocolate: "Shokoladlar", cocktail: "Kokteyllar", yogurt: "Yogurtlar" };
@@ -419,13 +432,15 @@ router.get("/", verifyToken, async (req, res) => {
       revenue: pc.revenue,
     }));
 
-    // Low stock
-    const lowStockProducts = lowStockProductsRaw.map((p) => ({
-      name: p.name,
-      stock: p.stockQuantity,
-      minAlert: p.minStockAlert || 5,
-      category: prodCatLabels[p.category] || p.category,
-    }));
+    // Low stock — faqat kam qolganlarni filtrlash
+    const lowStockProducts = lowStockProductsRaw
+      .filter((p) => p.stockQuantity <= (p.minStockAlert || 5))
+      .map((p) => ({
+        name: p.name,
+        stock: p.stockQuantity,
+        minAlert: p.minStockAlert || 5,
+        category: prodCatLabels[p.category] || p.category,
+      }));
 
     res.json({
       // UMUMIY
@@ -460,7 +475,7 @@ router.get("/", verifyToken, async (req, res) => {
       newMembersTrend,
       balanceStats: {
         totalBalance: bs.totalBalance,
-        avgBalance: Math.round(bs.avgBalance),
+        avgBalance: Math.round(bs.avgBalance || 0),
         membersWithBalance: bs.membersWithBalance,
       },
       topBalanceMembers,
