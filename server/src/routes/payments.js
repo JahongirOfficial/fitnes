@@ -124,7 +124,7 @@ router.get("/", verifyToken, async (req, res) => {
 // POST /api/payments
 router.post("/", verifyToken, async (req, res) => {
   try {
-    const { category, paymentMethod, amount, memberId, balanceAction, subType, memberName } = req.body;
+    const { type, category, paymentMethod, amount, memberId, balanceAction, subType, memberName } = req.body;
 
     // Balans operatsiyalari
     if (category === "balance" && memberId) {
