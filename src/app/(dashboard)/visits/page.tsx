@@ -192,11 +192,11 @@ export default function VisitsPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">#</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">A&apos;zo</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Kirish</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Chiqish</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Holat</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">A&apos;zo</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Kirish</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Chiqish</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Davomiylik</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Holat</th>
               </tr>
             </thead>
             <tbody>
@@ -281,28 +281,25 @@ export default function VisitsPage() {
               </div>
             </div>
             <div className="p-4 sm:p-6 pt-4">
-              <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-gray-100">
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3 pl-4 w-12">#</th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">A&apos;zo</th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Kirish vaqti</th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Chiqish vaqti</th>
-                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Davomiyligi</th>
+                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3 pl-4">A&apos;zo</th>
+                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Kirish</th>
+                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Chiqish</th>
+                      <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3">Davomiylik</th>
                       <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap pb-3 pr-4">Holat</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {visits.map((visit: any, index: number) => {
+                    {visits.map((visit: any) => {
                       const isActive = !visit.checkOutTime;
                       const elapsed = isActive ? getElapsedMinutes(visit.checkInTime) : visit.duration;
                       return (
                         <tr key={visit._id} className="hover:bg-gray-50/60 transition-colors">
-                          <td className="py-4 pl-4 text-sm text-gray-400 font-medium">{index + 1}</td>
-                          <td className="py-4">
+                          <td className="py-3 pl-4">
                             <div className="flex items-center gap-3">
-                              <div className={cn("w-9 h-9 rounded-full flex items-center justify-center", isActive ? "bg-green-100" : "bg-gray-100")}>
+                              <div className={cn("w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0", isActive ? "bg-green-100" : "bg-gray-100")}>
                                 <span className={cn("text-xs font-bold", isActive ? "text-green-600" : "text-gray-500")}>
                                   {getInitials(visit.memberName || "")}
                                 </span>
@@ -310,28 +307,28 @@ export default function VisitsPage() {
                               <span className="text-sm font-medium text-gray-900">{visit.memberName}</span>
                             </div>
                           </td>
-                          <td className="py-4">
+                          <td className="py-3">
                             <div className="flex items-center gap-1.5 text-sm text-gray-700">
                               <Clock className="w-3.5 h-3.5 text-gray-400" />
                               {new Date(visit.checkInTime).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                             </div>
                           </td>
-                          <td className="py-4">
+                          <td className="py-3">
                             {visit.checkOutTime ? (
                               <div className="flex items-center gap-1.5 text-sm text-gray-700">
                                 <Clock className="w-3.5 h-3.5 text-gray-400" />
                                 {new Date(visit.checkOutTime).toLocaleTimeString("uz-UZ", { hour: "2-digit", minute: "2-digit" })}
                               </div>
                             ) : (
-                              <span className="text-sm text-gray-400">--:--</span>
+                              <span className="text-sm text-gray-400">—</span>
                             )}
                           </td>
-                          <td className="py-4">
+                          <td className="py-3">
                             <span className={cn("text-sm", isActive ? "text-emerald-600 font-medium" : "text-gray-700")}>
                               {formatDuration(elapsed || 0)}
                             </span>
                           </td>
-                          <td className="py-4 pr-4">
+                          <td className="py-3 pr-4">
                             {isActive ? (
                               <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">
                                 <span className="relative flex h-1.5 w-1.5">
@@ -351,11 +348,10 @@ export default function VisitsPage() {
                       );
                     })}
                     {visits.length === 0 && (
-                      <tr><td colSpan={6} className="py-12 text-center text-gray-400 text-sm">Bugungi tashriflar mavjud emas</td></tr>
+                      <tr><td colSpan={5} className="py-12 text-center text-gray-400 text-sm">Bugungi tashriflar mavjud emas</td></tr>
                     )}
                   </tbody>
                 </table>
-              </div>
             </div>
           </div>
         </>

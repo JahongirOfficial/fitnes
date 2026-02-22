@@ -296,77 +296,61 @@ export default function MembersPage() {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">#</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Ism</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Maxsus ID</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Balans</th>
-                <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Ism</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
+                <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {Array.from({ length: 5 }).map((_, i) => (
-                <TableRowSkeleton key={i} cols={9} />
+                <TableRowSkeleton key={i} cols={6} />
               ))}
             </tbody>
           </table>
         </div>
       ) : viewMode === "table" ? (
         <div className="overflow-hidden rounded-2xl bg-white shadow-sm">
-          <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">#</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Ism</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Maxsus ID</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Balans</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">To&apos;lov</th>
-                  <th className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Ism</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Abonement</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Holat</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Muddat</th>
+                  <th className="whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Amallar</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {members.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-3 sm:px-6 py-12 text-center text-gray-400">
+                    <td colSpan={6} className="px-4 py-12 text-center text-gray-400">
                       Hech qanday a&apos;zo topilmadi
                     </td>
                   </tr>
                 ) : (
-                  members.map((member, idx) => (
+                  members.map((member) => (
                     <tr key={member._id} className="transition-colors hover:bg-gray-50 cursor-pointer" onClick={() => router.push(`/members/${member._id}`)}>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-500">
-                        {(currentPage - 1) * ITEMS_PER_PAGE + idx + 1}
-                      </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-blue-100 text-sm font-semibold text-blue-600">
                             {getInitials(member.fullName)}
                           </div>
                           <div>
                             <p className="font-medium text-gray-900">{member.fullName}</p>
-                            {member.email && <p className="text-xs text-gray-400">{member.email}</p>}
+                            {member.memberId && (
+                              <span className="inline-flex items-center rounded bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-600 font-mono tracking-wider">
+                                {member.memberId}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
-                        {member.memberId ? (
-                          <span className="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 font-mono tracking-wider">
-                            {member.memberId}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-gray-300">&mdash;</span>
-                        )}
-                      </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">{formatPhone(member.phone)}</td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3 text-sm text-gray-600">{formatPhone(member.phone)}</td>
+                      <td className="px-4 py-3">
                         {member.subscription?.type ? (
                           <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${subscriptionColor[member.subscription.type] || ""}`}>
                             {subscriptionLabel[member.subscription.type] || member.subscription.type}
@@ -375,31 +359,22 @@ export default function MembersPage() {
                           <span className="text-sm text-gray-400">—</span>
                         )}
                       </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${statusColor[member.status]}`}>
                           {statusLabel[member.status]}
                         </span>
                       </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">{formatDate(member.subscription?.endDate)}</td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">
-                        <span className={`text-sm font-semibold ${(member.balance || 0) > 0 ? "text-emerald-600" : "text-gray-400"}`}>
-                          {(member.balance || 0) > 0
-                            ? new Intl.NumberFormat("uz-UZ").format(member.balance!) + " so'm"
-                            : "0"}
-                        </span>
-                      </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          type="button"
-                          onClick={() => openPayment(member)}
-                          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100"
-                        >
-                          <Wallet className="h-3.5 w-3.5" />
-                          To&apos;lov
-                        </button>
-                      </td>
-                      <td className="whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2">
+                      <td className="px-4 py-3 text-sm text-gray-600">{formatDate(member.subscription?.endDate)}</td>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            title="To'lov"
+                            onClick={() => openPayment(member)}
+                            className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600"
+                          >
+                            <Wallet className="h-4 w-4" />
+                          </button>
                           <button type="button" title="Ko'rish" onClick={() => router.push(`/members/${member._id}`)} className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600">
                             <Eye className="h-4 w-4" />
                           </button>
@@ -416,7 +391,6 @@ export default function MembersPage() {
                 )}
               </tbody>
             </table>
-          </div>
 
           {/* Pagination */}
           <div className="flex items-center justify-between border-t border-gray-100 px-4 py-4 sm:px-6">

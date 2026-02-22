@@ -185,11 +185,11 @@ export default function CashierPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-gray-100">
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">#</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Tavsif</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Turi</th>
-                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Summa</th>
-                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Sana</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Tavsif</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Turi</th>
+                <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Summa</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">To&apos;lov</th>
+                <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Sana</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -201,29 +201,25 @@ export default function CashierPage() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-100">
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">#</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Tavsif</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">A&apos;zo</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Turi</th>
-                  <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Summa</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">To&apos;lov usuli</th>
-                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-3 sm:px-6 py-3 sm:py-4">Sana</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Tavsif</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Turi</th>
+                  <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Summa</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">To&apos;lov usuli</th>
+                  <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap px-4 py-3">Sana</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {payments.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-3 sm:px-6 py-12 text-center text-sm text-gray-400">Tranzaksiyalar topilmadi</td>
+                    <td colSpan={5} className="px-4 py-12 text-center text-sm text-gray-400">Tranzaksiyalar topilmadi</td>
                   </tr>
                 ) : (
-                  payments.map((payment: any, index: number) => (
+                  payments.map((payment: any) => (
                     <tr key={payment._id} className="hover:bg-gray-50/70 transition-colors duration-150">
-                      <td className="px-3 sm:px-6 py-3 sm:py-4"><span className="text-sm text-gray-400 font-medium">{index + 1}</span></td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           <div className={cn("w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0",
                             payment.type === "income" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600")}>
@@ -231,31 +227,27 @@ export default function CashierPage() {
                           </div>
                           <div>
                             <p className="text-sm font-medium text-gray-900">{payment.description}</p>
-                            <p className="text-xs text-gray-400 mt-0.5">{getCategoryLabel(payment.category)}</p>
+                            <p className="text-xs text-gray-400 mt-0.5">
+                              {getCategoryLabel(payment.category)}
+                              {payment.memberName && <span className="ml-1">· {payment.memberName}</span>}
+                            </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        {payment.memberName ? (
-                          <span className="text-sm text-gray-700">{payment.memberName}</span>
-                        ) : (
-                          <span className="text-sm text-gray-300">&mdash;</span>
-                        )}
-                      </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold",
                           payment.type === "income" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700")}>
                           {payment.type === "income" ? <ArrowDownLeft className="w-3 h-3" /> : <ArrowUpRight className="w-3 h-3" />}
                           {payment.type === "income" ? "Kirim" : "Chiqim"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3 text-right">
                         <span className={cn("text-sm font-bold tabular-nums",
                           payment.type === "income" ? "text-emerald-600" : "text-red-600")}>
                           {payment.type === "income" ? "+" : "-"}{formatCurrency(payment.amount)}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <span className={cn("inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border",
                           payment.paymentMethod === "cash" && "border-blue-200 bg-blue-50 text-blue-700",
                           payment.paymentMethod === "card" && "border-purple-200 bg-purple-50 text-purple-700",
@@ -268,7 +260,7 @@ export default function CashierPage() {
                           {getPaymentMethodLabel(payment.paymentMethod)}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-3 sm:py-4">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5 text-sm text-gray-500">
                           <Clock className="w-3.5 h-3.5 text-gray-400" />
                           {formatDateTime(payment.createdAt)}
@@ -279,7 +271,6 @@ export default function CashierPage() {
                 )}
               </tbody>
             </table>
-          </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0 px-3 sm:px-6 py-3 sm:py-4 border-t border-gray-100 bg-gray-50/50">
             <p className="text-sm text-gray-500">
               Jami: <span className="font-semibold text-gray-700">{payments.length}</span> ta tranzaksiya
