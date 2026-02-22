@@ -222,6 +222,55 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
+// POST /api/products/:id/restock - Mahsulot qabul qilish
+router.post("/:id/restock", verifyToken, async (req, res) => {
+  try {
+    const { quantity, costPrice } = req.body;
+    if (!quantity || quantity < 1) {
+      return res.status(400).json({ message: "Miqdorni kiriting" });
+    }
+
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: "Mahsulot topilmadi" });
+
+    const previousStock = product.stockQuantity;
+    product.stockQuantity += quantity;
+    if (costPrice !== undefined && costPrice > 0) {
+      product.costPrice = costPrice;
+    }
+    await product.save();
+
+    // StockMovement qayd
+    await new StockMovement({
+      productId: product._id,
+      type: "restock",
+      quantity: quantity,
+      previousStock,
+      newStock: product.stockQuantity,
+      description: `${product.name} x${quantity} qabul qilindi`,
+      createdBy: "Admin",
+    }).save();
+
+    // Xarajat Payment yaratish (tan narxi * miqdor)
+    const totalCost = (costPrice || product.costPrice || 0) * quantity;
+    if (totalCost > 0) {
+      await new Payment({
+        productId: product._id,
+        type: "expense",
+        category: "product",
+        amount: totalCost,
+        paymentMethod: "cash",
+        description: `${product.name} x${quantity} qabul qilindi (tan narxi)`,
+        createdBy: "Admin",
+      }).save();
+    }
+
+    res.json({ product });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // POST /api/products/:id/sell - Sell product
 router.post("/:id/sell", verifyToken, async (req, res) => {
   try {

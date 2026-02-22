@@ -226,6 +226,13 @@ class ApiClient {
     });
   }
 
+  async restockProduct(id: string, data: { quantity: number; costPrice?: number }) {
+    return this.request<any>(`/products/${id}/restock`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Product with image upload (FormData)
   async uploadProduct(formData: FormData) {
     return this.requestFormData<any>("/products", {

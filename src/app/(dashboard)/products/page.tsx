@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   Plus,
   Package,
+  PackagePlus,
   ShoppingCart,
   AlertTriangle,
   Search,
@@ -15,12 +16,13 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/ui/Toast";
-import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useSellProduct } from "@/lib/hooks";
+import { useProducts, useCreateProduct, useUpdateProduct, useDeleteProduct, useSellProduct, useRestockProduct } from "@/lib/hooks";
 import { useDebounce } from "@/lib/useDebounce";
 import { CategoryIcon } from "@/lib/categoryIcons";
 import { ProductCardSkeleton, StatCardSkeleton } from "@/components/ui/Skeleton";
 import ProductModal from "@/components/products/ProductModal";
 import SellModal from "@/components/products/SellModal";
+import RestockModal from "@/components/products/RestockModal";
 
 type Category = "all" | "drink" | "chocolate" | "cocktail" | "yogurt";
 
@@ -48,6 +50,7 @@ export default function ProductsPage() {
   const [selectedProduct, setSelectedProduct] = useState<any>(undefined);
   const [sellModalOpen, setSellModalOpen] = useState(false);
   const [sellProduct, setSellProduct] = useState<any>(undefined);
+  const [restockModalOpen, setRestockModalOpen] = useState(false);
 
   const queryParams = {
     ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
@@ -59,6 +62,7 @@ export default function ProductsPage() {
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
   const sellProductMutation = useSellProduct();
+  const restockProductMutation = useRestockProduct();
 
   const products = data?.products || [];
   const prodStats = data?.stats || {};
@@ -104,6 +108,12 @@ export default function ProductsPage() {
     toast("success", `${sellProduct.name} sotildi!`);
   };
 
+  const handleRestockSubmit = async (data: { productId: string; quantity: number; costPrice?: number }) => {
+    await restockProductMutation.mutateAsync({ id: data.productId, data: { quantity: data.quantity, costPrice: data.costPrice } });
+    const p = products.find((pr: any) => pr._id === data.productId);
+    toast("success", `${p?.name || "Mahsulot"} ga ${data.quantity} ta qabul qilindi!`);
+  };
+
   const totalProducts = prodStats.totalProducts || products.length;
   const warehouseValue =
     prodStats.warehouseValue ||
@@ -121,7 +131,19 @@ export default function ProductsPage() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3">
+        <button
+          onClick={() => setRestockModalOpen(true)}
+          className={cn(
+            "inline-flex items-center gap-2 px-5 py-2.5 rounded-xl",
+            "bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold",
+            "shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30",
+            "transform hover:-translate-y-0.5 transition-all duration-200"
+          )}
+        >
+          <PackagePlus className="w-5 h-5" />
+          Qabul qilish
+        </button>
         <button
           onClick={openCreateProduct}
           className={cn(
@@ -333,6 +355,12 @@ export default function ProductsPage() {
         onClose={() => setSellModalOpen(false)}
         onSubmit={handleSellSubmit}
         product={sellProduct}
+      />
+      <RestockModal
+        isOpen={restockModalOpen}
+        onClose={() => setRestockModalOpen(false)}
+        onSubmit={handleRestockSubmit}
+        products={products}
       />
     </div>
   );

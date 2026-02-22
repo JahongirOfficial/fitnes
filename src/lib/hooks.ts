@@ -52,6 +52,20 @@ export function useSellProduct() {
   });
 }
 
+export function useRestockProduct() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { quantity: number; costPrice?: number } }) =>
+      api.restockProduct(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["product-history"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+      qc.invalidateQueries({ queryKey: ["dashboard"] });
+    },
+  });
+}
+
 export function useProduct(id: string) {
   return useQuery({
     queryKey: ["product", id],
