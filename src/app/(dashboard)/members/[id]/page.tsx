@@ -652,7 +652,24 @@ function VisitsTab({ visits, isLoading, summary }: VisitsTabProps) {
                   )}
                 </td>
                 <td className="whitespace-nowrap py-3 text-sm text-gray-600">
-                  {visit.duration ? formatDuration(visit.duration) : "—"}
+                  {(() => {
+                    if (visit.duration) return formatDuration(visit.duration);
+                    if (visit.checkOutTime) {
+                      const mins = Math.round(
+                        (new Date(visit.checkOutTime).getTime() - new Date(visit.checkInTime).getTime()) / 60000
+                      );
+                      return formatDuration(mins > 0 ? mins : 1);
+                    }
+                    // Hali zalda — hozirgi davomiylikni ko'rsatish
+                    const elapsed = Math.round(
+                      (Date.now() - new Date(visit.checkInTime).getTime()) / 60000
+                    );
+                    return (
+                      <span className="text-emerald-600 font-medium">
+                        {formatDuration(elapsed > 0 ? elapsed : 1)}
+                      </span>
+                    );
+                  })()}
                 </td>
               </tr>
             ))}
