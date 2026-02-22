@@ -80,7 +80,6 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
 
   const handleSubmit = async () => {
     if (quantity < 1 || quantity > maxStock) return;
-    if (paymentMethod === "balance" && selectedMember && (selectedMember.balance || 0) < totalPrice) return;
     setIsLoading(true);
     try {
       await onSubmit({
@@ -97,8 +96,8 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
     { value: "cash", label: "Naqd" },
     { value: "card", label: "Karta" },
     { value: "transfer", label: "O'tkazma" },
-    ...(selectedMember?.balance
-      ? [{ value: "balance", label: `Balans (${formatPrice(selectedMember.balance)})` }]
+    ...(selectedMember
+      ? [{ value: "balance", label: `Balans (${formatPrice(selectedMember.balance || 0)})` }]
       : []),
   ];
 
@@ -111,7 +110,7 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
             Bekor qilish
           </button>
           <button onClick={handleSubmit}
-            disabled={isLoading || !selectedMember || quantity < 1 || quantity > maxStock || (paymentMethod === "balance" && (selectedMember.balance || 0) < totalPrice)}
+            disabled={isLoading || !selectedMember || quantity < 1 || quantity > maxStock}
             className={cn("inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
               "bg-blue-600 hover:bg-blue-700", "disabled:opacity-50 disabled:cursor-not-allowed")}>
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ShoppingBag size={16} />}
