@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -78,7 +79,11 @@ function SummaryCard({ title, value, icon, gradientFrom, gradientTo }: {
 
 export default function CashierPage() {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<TabType>("all");
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabType>(() => {
+    const tab = searchParams.get("tab");
+    return (tab === "income" || tab === "expense") ? tab : "all";
+  });
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
   const [modalOpen, setModalOpen] = useState(false);

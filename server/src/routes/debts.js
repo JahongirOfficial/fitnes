@@ -1,5 +1,6 @@
 import { Router } from "express";
 import Debt from "../models/Debt.js";
+import Payment from "../models/Payment.js";
 import { verifyToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -147,6 +148,21 @@ router.post("/:id/pay", verifyToken, async (req, res) => {
     }
 
     await debt.save();
+
+    // Kassaga payment yozish
+    try {
+      await new Payment({
+        type: "income",
+        category: "other",
+        amount: payAmount,
+        paymentMethod: req.body.paymentMethod || "cash",
+        description: description || `Qarz to'lovi: ${debt.personName}`,
+        memberName: debt.personName,
+        ...(debt.memberId ? { memberId: debt.memberId } : {}),
+        createdBy: "Admin",
+      }).save();
+    } catch (_) { /* payment xatosi asosiy oqimni to'xtatmasin */ }
+
     res.json(debt);
   } catch (err) {
     res.status(500).json({ message: err.message });

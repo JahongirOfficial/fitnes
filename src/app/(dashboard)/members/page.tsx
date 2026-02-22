@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Search,
   UserPlus,
@@ -101,9 +101,13 @@ const ITEMS_PER_PAGE = 10;
 
 export default function MembersPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>(() => {
+    const s = searchParams.get("status");
+    return (s === "active" || s === "expired" || s === "inactive") ? s : "all";
+  });
   const [subscriptionFilter, setSubscriptionFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
   const [currentPage, setCurrentPage] = useState(1);
@@ -271,12 +275,16 @@ export default function MembersPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[
-            { label: "Jami A'zolar", value: stats.total, color: "bg-blue-100", iconColor: "text-blue-600", bar: "bg-blue-500" },
-            { label: "Faol", value: stats.active, color: "bg-green-100", iconColor: "text-green-600", bar: "bg-green-500" },
-            { label: "Muddati tugagan", value: stats.expired, color: "bg-red-100", iconColor: "text-red-600", bar: "bg-red-500" },
-            { label: "Nofaol", value: stats.inactive, color: "bg-gray-100", iconColor: "text-gray-500", bar: "bg-gray-400" },
+            { label: "Jami A'zolar", value: stats.total, color: "bg-blue-100", iconColor: "text-blue-600", bar: "bg-blue-500", filter: "all" },
+            { label: "Faol", value: stats.active, color: "bg-green-100", iconColor: "text-green-600", bar: "bg-green-500", filter: "active" },
+            { label: "Muddati tugagan", value: stats.expired, color: "bg-red-100", iconColor: "text-red-600", bar: "bg-red-500", filter: "expired" },
+            { label: "Nofaol", value: stats.inactive, color: "bg-gray-100", iconColor: "text-gray-500", bar: "bg-gray-400", filter: "inactive" },
           ].map((s) => (
-            <div key={s.label} className="flex items-center gap-3 sm:gap-4 rounded-2xl bg-white p-3 sm:p-4 shadow-sm">
+            <div
+              key={s.label}
+              onClick={() => handleStatusChange(s.filter)}
+              className={`flex items-center gap-3 sm:gap-4 rounded-2xl bg-white p-3 sm:p-4 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${statusFilter === s.filter ? "ring-2 ring-blue-400" : ""}`}
+            >
               <div className={`flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl ${s.color}`}>
                 <Users className={`h-5 w-5 sm:h-6 sm:w-6 ${s.iconColor}`} />
               </div>

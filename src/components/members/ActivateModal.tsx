@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2, UserCheck, Calendar } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
 
 interface ActivateModalProps {
   isOpen: boolean;
@@ -40,6 +41,8 @@ function formatPrice(amount: number): string {
   return new Intl.NumberFormat("uz-UZ").format(amount) + " so'm";
 }
 
+const DEFAULT_PRICES: Record<string, number> = { daily: 30000, monthly: 300000, yearly: 2500000 };
+
 export default function ActivateModal({ isOpen, onClose, onSubmit, member }: ActivateModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const todayStr = new Date().toISOString().split("T")[0];
@@ -48,19 +51,38 @@ export default function ActivateModal({ isOpen, onClose, onSubmit, member }: Act
   const [startDate, setStartDate] = useState(todayStr);
   const [price, setPrice] = useState<number | "">("");
   const [paymentMethod, setPaymentMethod] = useState("cash");
+  const [settingsPrices, setSettingsPrices] = useState<Record<string, number>>(DEFAULT_PRICES);
 
   const selectedType = subscriptionTypes.find((t) => t.value === subscriptionType)!;
   const endDate = addDays(startDate, selectedType.days);
+
+  // Settings narxlarini yuklash
+  useEffect(() => {
+    if (!isOpen) return;
+    api.getSettings().then((s) => {
+      if (s?.pricing) {
+        setSettingsPrices({
+          daily: s.pricing.daily || DEFAULT_PRICES.daily,
+          monthly: s.pricing.monthly || DEFAULT_PRICES.monthly,
+          yearly: s.pricing.yearly || DEFAULT_PRICES.yearly,
+        });
+      }
+    }).catch(() => {});
+  }, [isOpen]);
 
   // Reset on open
   useEffect(() => {
     if (isOpen) {
       setSubscriptionType("monthly");
       setStartDate(new Date().toISOString().split("T")[0]);
-      setPrice("");
       setPaymentMethod("cash");
     }
   }, [isOpen]);
+
+  // Abonement turi o'zgarganda narxni avtomatik to'ldirish
+  useEffect(() => {
+    setPrice(settingsPrices[subscriptionType] ?? DEFAULT_PRICES[subscriptionType] ?? "");
+  }, [subscriptionType, settingsPrices]);
 
   const handleSubmit = async () => {
     if (!price || Number(price) <= 0) return;

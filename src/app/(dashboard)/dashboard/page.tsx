@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import {
   TrendingUp,
   Users,
@@ -82,6 +83,7 @@ const fallbackMonthlyData = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { data: dashData, isLoading } = useDashboard();
 
   const stats = dashData?.stats || {
@@ -99,10 +101,10 @@ export default function DashboardPage() {
   const currentlyInGym = dashData?.currentlyInGym || [];
 
   const statCards = [
-    { title: "Bugungi Daromad", value: stats.todayIncome, change: changes.income, gradient: "gradient-blue", Icon: TrendingUp },
-    { title: "Faol A'zolar", value: stats.activeMembers, change: changes.members, gradient: "gradient-green", Icon: Users, isCurrency: false },
-    { title: "Bugungi Tashriflar", value: stats.todayVisits, change: changes.visits, gradient: "gradient-purple", Icon: UserCheck, isCurrency: false },
-    { title: "Mahsulot Sotilishi", value: stats.productSales, change: changes.productSales, gradient: "gradient-orange", Icon: ShoppingBag },
+    { title: "Bugungi Daromad", value: stats.todayIncome, change: changes.income, gradient: "gradient-blue", Icon: TrendingUp, href: "/cashier?tab=income" },
+    { title: "Faol A'zolar", value: stats.activeMembers, change: changes.members, gradient: "gradient-green", Icon: Users, isCurrency: false, href: "/members?status=active" },
+    { title: "Bugungi Tashriflar", value: stats.todayVisits, change: changes.visits, gradient: "gradient-purple", Icon: UserCheck, isCurrency: false, href: "/visits" },
+    { title: "Mahsulot Sotilishi", value: stats.productSales, change: changes.productSales, gradient: "gradient-orange", Icon: ShoppingBag, href: "/products" },
   ];
 
   return (
@@ -117,7 +119,8 @@ export default function DashboardPage() {
               return (
                 <div
                   key={card.title}
-                  className={cn("bg-white rounded-2xl p-4 sm:p-6 shadow-sm card-hover animate-fade-in")}
+                  onClick={() => router.push(card.href)}
+                  className={cn("bg-white rounded-2xl p-4 sm:p-6 shadow-sm card-hover animate-fade-in cursor-pointer hover:shadow-md transition-shadow")}
                   style={{ animationDelay: `${index * 80}ms` }}
                 >
                   <div className={cn("w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center mb-3 sm:mb-4", card.gradient)}>
