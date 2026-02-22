@@ -117,9 +117,9 @@ router.post("/checkin", verifyToken, async (req, res) => {
       }
     }
 
-    // Obonement bo'lmagan a'zo (inactive) ni rad etish
-    if (member.status === "inactive" && !member.subscription) {
-      return res.status(400).json({ message: "A'zo abonement faol emas" });
+    // Nofaol a'zoni rad etish (barcha inactive a'zolar bloklanadi)
+    if (member.status === "inactive") {
+      return res.status(400).json({ message: "Nofaol a'zo. Avval abonementni faollashtiring" });
     }
 
     // Check if already checked in today

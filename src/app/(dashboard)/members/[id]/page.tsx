@@ -23,8 +23,12 @@ import {
   ChevronRight,
   MapPin,
   FileText,
+  UserX,
+  UserCheck,
 } from "lucide-react";
-import { useMember, useMemberPayments, useMemberVisits, useMemberDebts } from "@/lib/hooks";
+import { useMember, useMemberPayments, useMemberVisits, useMemberDebts, useDeactivateMember, useActivateMember } from "@/lib/hooks";
+import { useToast } from "@/components/ui/Toast";
+import ActivateModal from "@/components/members/ActivateModal";
 import {
   cn,
   formatCurrency,
@@ -145,8 +149,10 @@ export default function MemberProfilePage() {
   const router = useRouter();
   const id = params.id as string;
 
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<TabType>("payments");
   const [paymentPage, setPaymentPage] = useState(1);
+  const [activateModalOpen, setActivateModalOpen] = useState(false);
 
   // Ma'lumotlarni yuklash
   const { data: member, isLoading: memberLoading } = useMember(id);
@@ -164,6 +170,25 @@ export default function MemberProfilePage() {
   const visitsSummary = visitsData?.summary || { totalVisits: 0, avgDuration: 0 };
   const debts = debtsData?.debts || [];
   const debtsSummary = debtsData?.summary || { totalOutstanding: 0 };
+
+  // Status o'zgartirish
+  const deactivateMember = useDeactivateMember();
+  const activateMember = useActivateMember();
+
+  const handleDeactivate = async () => {
+    if (!confirm(`${member?.fullName} ni nofaolga o'tkazmoqchimisiz? Nofaol a'zo zalga kira olmaydi.`)) return;
+    try {
+      await deactivateMember.mutateAsync(id);
+      toast("success", "A'zo nofaolga o'tkazildi");
+    } catch (err: any) {
+      toast("error", err.message || "Xatolik yuz berdi");
+    }
+  };
+
+  const handleActivate = async (data: { subscriptionType: string; startDate: string; endDate: string; price: number; paymentMethod: string }) => {
+    await activateMember.mutateAsync({ id, data });
+    toast("success", `${member?.fullName} faollashtirildi!`);
+  };
 
   // ─── Loading holati ─────────────────────────────────────────────────────
 
@@ -286,6 +311,44 @@ export default function MemberProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Status tugmalari */}
+        {member.status === "expired" && (
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg flex-1">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>Abonement muddati tugagan. A&apos;zo nofaolga o&apos;tkazilishi yoki abonement yangilanishi kerak.</span>
+            </div>
+            <button
+              onClick={handleDeactivate}
+              disabled={deactivateMember.isPending}
+              className={cn(
+                "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+                "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200",
+                "disabled:opacity-50 disabled:cursor-not-allowed"
+              )}
+            >
+              <UserX className="h-4 w-4" />
+              Nofaolga o&apos;tkazish
+            </button>
+          </div>
+        )}
+
+        {member.status === "inactive" && (
+          <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-3 flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-gray-600 bg-gray-50 px-3 py-2 rounded-lg flex-1">
+              <XCircle className="h-4 w-4 shrink-0 text-gray-400" />
+              <span>A&apos;zo nofaol. Zalga kirish taqiqlangan.</span>
+            </div>
+            <button
+              onClick={() => setActivateModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm"
+            >
+              <UserCheck className="h-4 w-4" />
+              Faolga o&apos;tkazish
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ────── Statistika kartalar ────── */}
@@ -453,6 +516,14 @@ export default function MemberProfilePage() {
           )}
         </div>
       </div>
+
+      {/* ────── ActivateModal ────── */}
+      <ActivateModal
+        isOpen={activateModalOpen}
+        onClose={() => setActivateModalOpen(false)}
+        onSubmit={handleActivate}
+        member={member}
+      />
     </div>
   );
 }

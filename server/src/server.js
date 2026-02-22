@@ -18,6 +18,10 @@ import notificationRoutes from "./routes/notifications.js";
 import botRoutes from "./routes/bot.js";
 import { startTelegramBot } from "./bot.js";
 
+import Member from "./models/Member.js";
+import Debt from "./models/Debt.js";
+import Settings from "./models/Settings.js";
+
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -69,6 +73,68 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
+// ── Muddati o'tgan a'zolar uchun avtomatik qarz tekshiruvi ──
+async function checkExpiredSubscriptions() {
+  try {
+    const now = new Date();
+    // Faol a'zolarni topish, lekin subscription.endDate o'tgan
+    const expiredMembers = await Member.find({
+      status: "active",
+      "subscription.endDate": { $lt: now },
+    });
+
+    if (expiredMembers.length === 0) return;
+
+    const settings = await Settings.findOne();
+    const dailyRate = settings?.pricing?.daily || 30000;
+
+    for (const member of expiredMembers) {
+      const endDate = new Date(member.subscription.endDate);
+      const extraDays = Math.ceil((now.getTime() - endDate.getTime()) / (1000 * 60 * 60 * 24));
+      const debtAmount = extraDays * dailyRate;
+
+      // Mavjud qarzni yangilash yoki yangi yaratish
+      const existingDebt = await Debt.findOne({
+        memberId: member._id,
+        status: { $in: ["unpaid", "partial"] },
+        description: /muddati o'tgan/i,
+      });
+
+      if (existingDebt) {
+        existingDebt.amount = debtAmount;
+        existingDebt.remainingAmount = debtAmount - existingDebt.paidAmount;
+        if (existingDebt.remainingAmount <= 0) {
+          existingDebt.remainingAmount = 0;
+          existingDebt.status = "paid";
+        } else {
+          existingDebt.status = existingDebt.paidAmount > 0 ? "partial" : "unpaid";
+        }
+        await existingDebt.save();
+      } else {
+        await new Debt({
+          memberId: member._id,
+          personName: member.fullName,
+          phone: member.phone,
+          amount: debtAmount,
+          remainingAmount: debtAmount,
+          description: `Abonement muddati o'tgan (${extraDays} kun)`,
+          createdBy: "Tizim",
+        }).save();
+      }
+
+      // Statusni expired qilish
+      await Member.findByIdAndUpdate(member._id, {
+        status: "expired",
+        "subscription.status": "expired",
+      });
+    }
+
+    console.log(`[Auto-debt] ${expiredMembers.length} ta muddati o'tgan a'zo tekshirildi`);
+  } catch (err) {
+    console.error("[Auto-debt] Xatolik:", err.message);
+  }
+}
+
 // Connect to MongoDB and start server
 const PORT = process.env.PORT || 5000;
 
@@ -80,6 +146,10 @@ mongoose
       console.log(`Server running on port ${PORT}`);
     });
     startTelegramBot();
+
+    // Avtomatik qarz tekshiruvi: start da + har 6 soatda
+    checkExpiredSubscriptions();
+    setInterval(checkExpiredSubscriptions, 6 * 60 * 60 * 1000);
   })
   .catch((err) => {
     console.error("MongoDB connection error:", err.message);

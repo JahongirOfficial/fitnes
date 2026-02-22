@@ -178,6 +178,30 @@ export function useMember(id: string) {
   });
 }
 
+export function useDeactivateMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => api.deactivateMember(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      qc.invalidateQueries({ queryKey: ["member"] });
+    },
+  });
+}
+
+export function useActivateMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { subscriptionType: string; startDate: string; endDate: string; price: number; paymentMethod?: string } }) =>
+      api.activateMember(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["members"] });
+      qc.invalidateQueries({ queryKey: ["member"] });
+      qc.invalidateQueries({ queryKey: ["payments"] });
+    },
+  });
+}
+
 export function useMemberPayments(memberId: string, params?: { page?: number; limit?: number }) {
   return useQuery({
     queryKey: ["payments", { memberId, ...params }],

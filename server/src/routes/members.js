@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Member from "../models/Member.js";
 import Payment from "../models/Payment.js";
+import Debt from "../models/Debt.js";
 import Notification from "../models/Notification.js";
 import Settings from "../models/Settings.js";
 import { verifyToken } from "../middleware/auth.js";
@@ -177,6 +178,70 @@ router.delete("/:id", verifyToken, async (req, res) => {
     const member = await Member.findByIdAndDelete(req.params.id);
     if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
     res.json({ message: "A'zo o'chirildi" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/members/:id/deactivate - Nofaolga o'tkazish
+router.put("/:id/deactivate", verifyToken, async (req, res) => {
+  try {
+    const member = await Member.findById(req.params.id);
+    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+
+    member.status = "inactive";
+    if (member.subscription) {
+      member.subscription.status = "expired";
+    }
+    await member.save();
+
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// PUT /api/members/:id/activate - Faolga o'tkazish (yangi abonement)
+router.put("/:id/activate", verifyToken, async (req, res) => {
+  try {
+    const { subscriptionType, startDate, endDate, price, paymentMethod } = req.body;
+
+    if (!subscriptionType || !startDate || !endDate || !price) {
+      return res.status(400).json({ message: "Barcha maydonlarni to'ldiring" });
+    }
+
+    const member = await Member.findById(req.params.id);
+    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+
+    // Yangi abonement o'rnatish
+    member.subscription = {
+      type: subscriptionType,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      price: Number(price),
+      status: "active",
+    };
+    member.status = "active";
+    await member.save();
+
+    // To'lov yaratish
+    const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
+    const subLabel = subLabels[subscriptionType] || subscriptionType;
+    await new Payment({
+      memberId: member._id,
+      memberName: member.fullName,
+      type: "income",
+      category: "subscription",
+      amount: Number(price),
+      paymentMethod: paymentMethod || "cash",
+      description: `${subLabel} abonement to'lovi (qayta faollashtirish)`,
+      createdBy: "Admin",
+    }).save();
+
+    // Muddati o'tgan qarzni "to'langan" deb belgilash (ixtiyoriy — to'lov qilmagan bo'lishi ham mumkin)
+    // Faqat status o'zgartiriladi, lekin qarz avtomatik o'chirilmaydi
+
+    res.json(member);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -153,6 +153,17 @@ class ApiClient {
     return this.request<any>(`/members/${id}/qr`, { method: "POST" });
   }
 
+  async deactivateMember(id: string) {
+    return this.request<any>(`/members/${id}/deactivate`, { method: "PUT" });
+  }
+
+  async activateMember(id: string, data: { subscriptionType: string; startDate: string; endDate: string; price: number; paymentMethod?: string }) {
+    return this.request<any>(`/members/${id}/activate`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
   async bulkGenerateQR() {
     return this.request<any>("/members/bulk-qr", { method: "POST" });
   }
