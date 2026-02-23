@@ -26,6 +26,7 @@ const memberSchema = new mongoose.Schema(
     subscription: subscriptionSchema,
     balance: { type: Number, default: 0 },
     telegramChatId: { type: String, default: "" },
+    dailyPaidDate: { type: Date, default: null },
   },
   { timestamps: true }
 );

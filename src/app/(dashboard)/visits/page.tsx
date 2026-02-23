@@ -13,12 +13,15 @@ import {
   Loader2,
   Search,
   QrCode,
+  BadgeCheck,
+  BadgeX,
+  Banknote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDebounce } from "@/lib/useDebounce";
 import { api } from "@/lib/api";
 import { useToast } from "@/components/ui/Toast";
-import { useVisits, useCheckIn, useCheckOut, useCheckOutByMember } from "@/lib/hooks";
+import { useVisits, useCheckIn, useCheckOut, useCheckOutByMember, useMembers, useDailyPay } from "@/lib/hooks";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/Skeleton";
 import Modal from "@/components/ui/Modal";
 
@@ -54,14 +57,45 @@ export default function VisitsPage() {
   const [searching, setSearching] = useState(false);
   const [qrScanMode, setQrScanMode] = useState<"checkin" | "checkout" | null>(null);
 
+  const [dailyPayModal, setDailyPayModal] = useState<{ member: any; paymentMethod: string } | null>(null);
+
   const { data, isLoading } = useVisits();
+  const { data: dailyMembersData } = useMembers({ subscription: "daily", limit: 100 });
   const checkIn = useCheckIn();
   const checkOut = useCheckOut();
   const checkOutByMember = useCheckOutByMember();
+  const dailyPay = useDailyPay();
 
   const visits = data?.visits || [];
   const summary = data?.summary || { currentlyInGym: 0, totalToday: 0, avgDuration: 0 };
   const activeMembers = visits.filter((v: any) => !v.checkOutTime);
+  const dailyMembers = dailyMembersData?.members || [];
+
+  function isPaidToday(member: any): boolean {
+    if (!member.dailyPaidDate) return false;
+    const paid = new Date(member.dailyPaidDate);
+    const today = new Date();
+    return paid.getFullYear() === today.getFullYear() &&
+      paid.getMonth() === today.getMonth() &&
+      paid.getDate() === today.getDate();
+  }
+
+  const handleDailyPay = async () => {
+    if (!dailyPayModal) return;
+    try {
+      await dailyPay.mutateAsync({
+        id: dailyPayModal.member._id,
+        data: {
+          amount: dailyPayModal.member.subscription?.price || 30000,
+          paymentMethod: dailyPayModal.paymentMethod,
+        },
+      });
+      toast("success", `${dailyPayModal.member.fullName} — bugungi to'lov qayd etildi`);
+      setDailyPayModal(null);
+    } catch (err: any) {
+      toast("error", err.message || "To'lov qayd etishda xatolik");
+    }
+  };
 
   // Debounced auto-search
   useEffect(() => {
@@ -208,6 +242,69 @@ export default function VisitsPage() {
         </div>
       ) : (
         <>
+          {/* Kunlik a'zolar */}
+          {dailyMembers.length > 0 && (
+            <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="flex items-center gap-3 mb-4 sm:mb-5">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <Banknote className="w-5 h-5 text-amber-600" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">Kunlik a&apos;zolar</h2>
+                  <p className="text-xs text-gray-500">
+                    {dailyMembers.filter(isPaidToday).length}/{dailyMembers.length} ta bugun to&apos;lov qilgan
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {dailyMembers.map((member: any) => {
+                  const paid = isPaidToday(member);
+                  return (
+                    <div key={member._id} className={cn(
+                      "p-4 rounded-xl border transition-all duration-200",
+                      paid
+                        ? "border-emerald-100 bg-emerald-50/40"
+                        : "border-amber-100 bg-amber-50/30"
+                    )}>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className={cn("w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold",
+                          paid ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700")}>
+                          {getInitials(member.fullName)}
+                        </div>
+                        {paid ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-100 px-2 py-0.5 rounded-full">
+                            <BadgeCheck className="w-3 h-3" /> To&apos;ladi
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
+                            <BadgeX className="w-3 h-3" /> To&apos;lamadi
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 mb-0.5 truncate">{member.fullName}</p>
+                      <p className="text-xs text-gray-500 mb-3">
+                        {new Intl.NumberFormat("uz-UZ").format(member.subscription?.price || 0)} so&apos;m/kun
+                      </p>
+                      {!paid && (
+                        <button
+                          onClick={() => setDailyPayModal({ member, paymentMethod: "cash" })}
+                          className={cn(
+                            "w-full inline-flex items-center justify-center gap-1.5",
+                            "px-3 py-1.5 rounded-lg text-xs font-semibold",
+                            "bg-amber-500 hover:bg-amber-600 text-white transition-all"
+                          )}
+                        >
+                          <Banknote className="w-3.5 h-3.5" />
+                          To&apos;lov qildi
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Currently in Gym */}
           <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm animate-fade-in" style={{ animationDelay: "240ms" }}>
             <div className="flex items-center gap-3 mb-4 sm:mb-6">
@@ -405,6 +502,72 @@ export default function VisitsPage() {
           mode={qrScanMode}
         />
       )}
+
+      {/* Daily Pay Modal */}
+      <Modal
+        isOpen={!!dailyPayModal}
+        onClose={() => setDailyPayModal(null)}
+        title="Kunlik to'lovni qayd etish"
+        size="sm"
+        footer={
+          <>
+            <button
+              onClick={() => setDailyPayModal(null)}
+              className="px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 transition"
+            >
+              Bekor qilish
+            </button>
+            <button
+              onClick={handleDailyPay}
+              disabled={dailyPay.isPending}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 shadow-sm disabled:opacity-50 transition"
+            >
+              {dailyPay.isPending ? <Loader2 size={16} className="animate-spin" /> : <Banknote size={16} />}
+              To&apos;lovni tasdiqlash
+            </button>
+          </>
+        }
+      >
+        {dailyPayModal && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
+              <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-sm font-bold text-amber-700">
+                {getInitials(dailyPayModal.member.fullName)}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{dailyPayModal.member.fullName}</p>
+                <p className="text-sm text-amber-700 font-medium">
+                  {new Intl.NumberFormat("uz-UZ").format(dailyPayModal.member.subscription?.price || 0)} so&apos;m
+                </p>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">To&apos;lov usuli</label>
+              <div className="flex gap-2">
+                {[
+                  { value: "cash", label: "Naqd" },
+                  { value: "card", label: "Karta" },
+                  { value: "transfer", label: "O'tkazma" },
+                ].map((m) => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setDailyPayModal((prev) => prev ? { ...prev, paymentMethod: m.value } : null)}
+                    className={cn(
+                      "flex-1 px-4 py-2.5 rounded-xl text-sm font-medium transition-all border",
+                      dailyPayModal.paymentMethod === m.value
+                        ? "border-amber-500 bg-amber-50 text-amber-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                    )}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

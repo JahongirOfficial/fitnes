@@ -81,6 +81,7 @@ async function checkExpiredSubscriptions() {
     const expiredMembers = await Member.find({
       status: "active",
       "subscription.endDate": { $lt: now },
+      "subscription.type": { $ne: "daily" },
     });
 
     if (expiredMembers.length === 0) return;

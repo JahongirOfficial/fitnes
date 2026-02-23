@@ -98,6 +98,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 // POST /api/members - Create member
 router.post("/", verifyToken, async (req, res) => {
   try {
+    const { paidAmount: paidAmountInput, ...memberData } = req.body;
     const member = new Member(req.body);
 
     // Generate unique 8-digit member ID
@@ -108,7 +109,17 @@ router.post("/", verifyToken, async (req, res) => {
     member.qrCode = await QRCode.toDataURL(qrData, { width: 300, margin: 2 });
 
     // Set status based on subscription
-    if (member.subscription && member.subscription.endDate) {
+    if (member.subscription?.type === "daily") {
+      // Kunlik a'zolar doimiy active — endDate ni uzoq kelajakka qo'yamiz
+      member.subscription.endDate = new Date("2099-12-31");
+      member.status = "active";
+      member.subscription.status = "active";
+      // Bugun to'lov qilgan bo'lsa dailyPaidDate o'rnatamiz
+      const paid = paidAmountInput ?? member.subscription.price;
+      if (paid > 0) {
+        member.dailyPaidDate = new Date();
+      }
+    } else if (member.subscription && member.subscription.endDate) {
       const endDate = new Date(member.subscription.endDate);
       member.status = endDate >= new Date() ? "active" : "expired";
       member.subscription.status = member.status === "active" ? "active" : "expired";
@@ -116,21 +127,36 @@ router.post("/", verifyToken, async (req, res) => {
 
     await member.save();
 
-    // Yangi a'zo to'lovini kassaga kirim qilish
-    if (member.subscription && member.subscription.price > 0) {
+    // To'lovni kassaga kirim qilish (paidAmount bo'yicha, subscription.price emas)
+    const subscriptionPrice = member.subscription?.price || 0;
+    const paidAmount = paidAmountInput ?? subscriptionPrice;
+    if (paidAmount > 0) {
       const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
-      const subLabel = subLabels[member.subscription.type] || member.subscription.type;
-      const payment = new Payment({
+      const subLabel = subLabels[member.subscription?.type] || member.subscription?.type;
+      await new Payment({
         memberId: member._id,
         memberName: member.fullName,
         type: "income",
         category: "subscription",
-        amount: member.subscription.price,
+        amount: paidAmount,
         paymentMethod: req.body.paymentMethod || "cash",
         description: `${subLabel} abonement to'lovi (yangi a'zo)`,
         createdBy: "Kassir",
-      });
-      await payment.save();
+      }).save();
+    }
+
+    // Agar kamroq to'langan bo'lsa — qarz yaratish
+    if (subscriptionPrice > 0 && paidAmount < subscriptionPrice) {
+      const debtAmount = subscriptionPrice - paidAmount;
+      await new Debt({
+        memberId: member._id,
+        personName: member.fullName,
+        phone: member.phone,
+        amount: debtAmount,
+        remainingAmount: debtAmount,
+        description: `Abonement to'lovi yetishmovchiligi`,
+        createdBy: "Kassir",
+      }).save();
     }
 
     // Yangi a'zo bildirishnomasi
@@ -261,6 +287,39 @@ router.post("/:id/qr", verifyToken, async (req, res) => {
     await member.save();
 
     res.json({ qrCode: member.qrCode, memberId: member.memberId });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// POST /api/members/:id/daily-pay - Kunlik a'zo bugungi to'lovini qayd etish
+router.post("/:id/daily-pay", verifyToken, async (req, res) => {
+  try {
+    const { amount, paymentMethod } = req.body;
+
+    const member = await Member.findById(req.params.id);
+    if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
+
+    if (member.subscription?.type !== "daily") {
+      return res.status(400).json({ message: "Bu a'zo kunlik abonementda emas" });
+    }
+
+    member.dailyPaidDate = new Date();
+    await member.save();
+
+    const paidAmount = amount || member.subscription?.price || 30000;
+    await new Payment({
+      memberId: member._id,
+      memberName: member.fullName,
+      type: "income",
+      category: "subscription",
+      amount: paidAmount,
+      paymentMethod: paymentMethod || "cash",
+      description: `Kunlik to'lov`,
+      createdBy: "Kassir",
+    }).save();
+
+    res.json(member);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

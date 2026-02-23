@@ -59,13 +59,23 @@ router.post("/checkin", verifyToken, async (req, res) => {
     const member = await Member.findById(memberId);
     if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
 
+    // Kunlik a'zoni bugungi to'lov tekshiruvi
+    if (member.subscription?.type === "daily") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const paidDate = member.dailyPaidDate ? new Date(member.dailyPaidDate) : null;
+      if (!paidDate || paidDate < today) {
+        return res.status(400).json({ message: "Kunlik a'zo bugun to'lov qilmagan" });
+      }
+    }
+
     // Obonement statusni endDate asosida qayta hisoblash
     let isExpired = false;
     let extraDays = 0;
     let debtCreated = false;
     let debtAmount = 0;
 
-    if (member.subscription && member.subscription.endDate) {
+    if (member.subscription?.type !== "daily" && member.subscription && member.subscription.endDate) {
       const endDate = new Date(member.subscription.endDate);
       const now = new Date();
       if (endDate < now) {

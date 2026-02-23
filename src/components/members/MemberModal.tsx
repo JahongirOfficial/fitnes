@@ -17,6 +17,7 @@ interface MemberFormData {
   subscriptionStartDate: string;
   subscriptionEndDate: string;
   subscriptionPrice: number;
+  paidAmount: number;
   paymentMethod: string;
 }
 
@@ -62,6 +63,7 @@ export default function MemberModal({
     subscriptionStartDate: new Date().toISOString().split("T")[0],
     subscriptionEndDate: "",
     subscriptionPrice: 300000,
+    paidAmount: 300000,
     paymentMethod: "cash",
   });
 
@@ -101,10 +103,12 @@ export default function MemberModal({
           ? new Date(member.subscription.endDate).toISOString().split("T")[0]
           : "",
         subscriptionPrice: member.subscription?.price || 300000,
+        paidAmount: member.subscription?.price || 300000,
         paymentMethod: "cash",
       });
     } else {
       const today = new Date().toISOString().split("T")[0];
+      const price = settingsPrices.monthly || 300000;
       setForm({
         fullName: "",
         phone: "+998",
@@ -114,7 +118,8 @@ export default function MemberModal({
         subscriptionType: "monthly",
         subscriptionStartDate: today,
         subscriptionEndDate: calculateEndDate(today, "monthly"),
-        subscriptionPrice: settingsPrices.monthly || 300000,
+        subscriptionPrice: price,
+        paidAmount: price,
         paymentMethod: "cash",
       });
     }
@@ -134,6 +139,11 @@ export default function MemberModal({
         return { ...prev, subscriptionPrice: numValue };
       }
 
+      if (field === "paidAmount") {
+        const numValue = typeof value === "string" ? unformatAmount(value) : value;
+        return { ...prev, paidAmount: numValue };
+      }
+
       const updated = { ...prev, [field]: value };
 
       if (field === "subscriptionType") {
@@ -142,6 +152,10 @@ export default function MemberModal({
         const newDefault = settingsPrices[value as string] || 300000;
         if (prev.subscriptionPrice === oldDefault || prev.subscriptionPrice === defaultPrices[prev.subscriptionType]) {
           updated.subscriptionPrice = newDefault;
+          // paidAmount ham yangi narxga sinxronlashtirish (agar avval to'liq edi)
+          if (prev.paidAmount === prev.subscriptionPrice) {
+            updated.paidAmount = newDefault;
+          }
         }
         updated.subscriptionEndDate = calculateEndDate(
           updated.subscriptionStartDate,
@@ -176,6 +190,7 @@ export default function MemberModal({
           endDate: form.subscriptionEndDate,
           price: form.subscriptionPrice,
         },
+        paidAmount: mode === "create" ? form.paidAmount : undefined,
         paymentMethod: form.paymentMethod,
       });
       onClose();
@@ -387,21 +402,55 @@ export default function MemberModal({
               />
             </div>
           </div>
-          <div className="mt-3">
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">
-              Narx (so&#39;m)
-            </label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={formatAmountInput(String(form.subscriptionPrice))}
-              onChange={(e) =>
-                handleChange("subscriptionPrice", e.target.value)
-              }
-              disabled={isView}
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:opacity-60 max-w-xs"
-            />
-          </div>
+          {/* Narx bo'limi — create modeda tarif narxi + to'lov summasi, edit/view da oddiy narx */}
+          {mode === "create" ? (
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  A&apos;zo tarif narxi
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatAmountInput(String(form.subscriptionPrice))}
+                  onChange={(e) => handleChange("subscriptionPrice", e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Summa (so&apos;m)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formatAmountInput(String(form.paidAmount))}
+                  onChange={(e) => handleChange("paidAmount", e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                />
+              </div>
+              {form.paidAmount < form.subscriptionPrice && form.subscriptionPrice > 0 && (
+                <div className="sm:col-span-2 flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+                  <span className="font-semibold">Qarz:</span>
+                  <span>{formatAmountInput(String(form.subscriptionPrice - form.paidAmount))} so&apos;m — qarz daftarchaga yoziladi</span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-3">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Narx (so&#39;m)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={formatAmountInput(String(form.subscriptionPrice))}
+                onChange={(e) => handleChange("subscriptionPrice", e.target.value)}
+                disabled={isView}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition disabled:opacity-60 max-w-xs"
+              />
+            </div>
+          )}
           {/* Payment method selector - only in create mode */}
           {mode === "create" && (
             <div className="mt-3">
