@@ -64,18 +64,18 @@ const stats = [
   { value: "4.9", label: "Reyting", icon: Star },
 ];
 
-const pricingPlans = [
+const pricingMeta = [
   {
+    key: "daily" as const,
     name: "Kunlik",
-    price: "30,000",
     period: "kun",
     desc: "Sinab ko'rish uchun",
     features: ["Barcha jihozlardan foydalanish", "Dush xonasi", "Shaxsiy shkafcha"],
     popular: false,
   },
   {
+    key: "monthly" as const,
     name: "Oylik",
-    price: "300,000",
     period: "oy",
     desc: "Eng mashhur tanlov",
     features: [
@@ -88,8 +88,8 @@ const pricingPlans = [
     popular: true,
   },
   {
+    key: "yearly" as const,
     name: "Yillik",
-    price: "2,500,000",
     period: "yil",
     desc: "Maksimal tejash",
     features: [
@@ -129,14 +129,24 @@ const testimonials = [
   },
 ];
 
+type PricingData = { daily: number; monthly: number; yearly: number };
+
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [pricing, setPricing] = useState<PricingData>({ daily: 30000, monthly: 300000, yearly: 2500000 });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  useEffect(() => {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/settings/public`)
+      .then((r) => r.json())
+      .then((data) => { if (data?.pricing) setPricing(data.pricing); })
+      .catch(() => {});
   }, []);
 
   return (
@@ -406,7 +416,10 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
-            {pricingPlans.map((plan) => (
+            {pricingMeta.map((plan) => {
+              const price = pricing[plan.key];
+              const priceFormatted = price.toLocaleString("uz-UZ");
+              return (
               <div key={plan.name} className={cn(
                 "relative rounded-3xl p-7 sm:p-8 flex flex-col transition-all duration-300",
                 plan.popular
@@ -429,7 +442,7 @@ export default function LandingPage() {
 
                 <div className="mb-7">
                   <div className={cn("text-4xl font-black leading-none mb-1.5", plan.popular ? "text-emerald-400" : "text-white")}>
-                    {plan.price}
+                    {priceFormatted}
                   </div>
                   <div className="text-slate-400 text-sm">so&apos;m / {plan.period}</div>
                 </div>
@@ -454,7 +467,8 @@ export default function LandingPage() {
                   Tanlash <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
