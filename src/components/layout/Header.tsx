@@ -131,7 +131,7 @@ export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {
   };
 
   const currentPage = pageTitles[pathname] || {
-    title: "FitnessPro",
+    title: "ALIFIT",
     subtitle: "",
   };
 

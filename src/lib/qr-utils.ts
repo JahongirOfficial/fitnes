@@ -124,7 +124,7 @@ export function printQrCard(
     </head>
     <body>
       <div class="card">
-        <div class="logo">FitnessPro</div>
+        <div class="logo">ALIFIT</div>
         <div class="subtitle">A'zolik kartasi</div>
         <div class="qr-wrapper">
           <img src="${dataUrl}" alt="QR Code" />

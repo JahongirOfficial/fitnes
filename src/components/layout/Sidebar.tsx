@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  Dumbbell,
   LayoutDashboard,
   Users,
   Wallet,
@@ -91,12 +91,20 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         {/* Logo */}
         <div className="flex items-center justify-between px-5 h-16 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl gradient-blue flex items-center justify-center shrink-0">
-              <Dumbbell size={22} className="text-white" />
+            <div className="w-10 h-10 flex items-center justify-center shrink-0">
+              <Image
+                src="/ALIFITSYB.png"
+                alt="ALIFIT"
+                width={40}
+                height={40}
+                className="object-contain drop-shadow-[0_0_6px_rgba(52,211,153,0.5)]"
+              />
             </div>
             {(!collapsed || mobileOpen) && (
               <div>
-                <h1 className="text-lg font-bold text-white">FitnessPro</h1>
+                <h1 className="text-lg font-black text-white tracking-tight">
+                  ALI<span className="text-emerald-400">FIT</span>
+                </h1>
                 <p className="text-[11px] text-slate-400 -mt-0.5">CRM Tizimi</p>
               </div>
             )}

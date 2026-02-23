@@ -38,7 +38,7 @@ export default function SettingsPage() {
   });
 
   const [gymSettings, setGymSettings] = useState({
-    gymName: "FitnessPro Gym", address: "Toshkent sh., Chilonzor tumani",
+    gymName: "ALIFIT Gym", address: "Toshkent sh., Chilonzor tumani",
     phone: "+998712345678", workingHours: "06:00 - 23:00",
     dailyPrice: "30000", monthlyPrice: "300000", yearlyPrice: "2500000",
   });
@@ -63,7 +63,7 @@ export default function SettingsPage() {
   useEffect(() => {
     if (settingsData) {
       setGymSettings({
-        gymName: settingsData.gymName || "FitnessPro Gym",
+        gymName: settingsData.gymName || "ALIFIT Gym",
         address: settingsData.address || "",
         phone: settingsData.phone || "",
         workingHours: settingsData.workingHours || "06:00 - 23:00",
