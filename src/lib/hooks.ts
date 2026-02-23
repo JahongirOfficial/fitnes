@@ -94,6 +94,8 @@ export function useMembers(params?: {
   return useQuery({
     queryKey: ["members", params],
     queryFn: () => api.getMembers(params),
+    staleTime: 30 * 1000,
+    placeholderData: (prev: any) => prev,
   });
 }
 

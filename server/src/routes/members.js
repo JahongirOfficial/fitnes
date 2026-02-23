@@ -38,18 +38,16 @@ router.get("/", verifyToken, async (req, res) => {
     }
 
     const skip = (Number(page) - 1) * Number(limit);
-    const [members, total] = await Promise.all([
+    const [members, total, statsTotal, statsActive, statsExpired, statsInactive] = await Promise.all([
       Member.find(filter).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
       Member.countDocuments(filter),
+      Member.countDocuments(),
+      Member.countDocuments({ status: "active" }),
+      Member.countDocuments({ status: "expired" }),
+      Member.countDocuments({ status: "inactive" }),
     ]);
 
-    // Stats
-    const stats = {
-      total: await Member.countDocuments(),
-      active: await Member.countDocuments({ status: "active" }),
-      expired: await Member.countDocuments({ status: "expired" }),
-      inactive: await Member.countDocuments({ status: "inactive" }),
-    };
+    const stats = { total: statsTotal, active: statsActive, expired: statsExpired, inactive: statsInactive };
 
     res.json({ members, total, stats, page: Number(page), totalPages: Math.ceil(total / Number(limit)) });
   } catch (err) {

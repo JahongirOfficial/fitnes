@@ -32,5 +32,9 @@ const memberSchema = new mongoose.Schema(
 );
 
 memberSchema.index({ fullName: "text", phone: "text", email: "text" });
+memberSchema.index({ status: 1 });
+memberSchema.index({ "subscription.type": 1 });
+memberSchema.index({ status: 1, "subscription.type": 1 });
+memberSchema.index({ createdAt: -1 });
 
 export default mongoose.model("Member", memberSchema);
