@@ -57,7 +57,12 @@ export default function VisitsPage() {
   const [searching, setSearching] = useState(false);
   const [qrScanMode, setQrScanMode] = useState<"checkin" | "checkout" | null>(null);
 
-  const [dailyPayModal, setDailyPayModal] = useState<{ member: any; paymentMethod: string } | null>(null);
+  const [dailyPayModal, setDailyPayModal] = useState<{
+    member: any;
+    requiredAmount: number;
+    paidAmount: number;
+    paymentMethod: string;
+  } | null>(null);
 
   const { data, isLoading } = useVisits();
   const { data: dailyMembersData } = useMembers({ subscription: "daily", limit: 100 });
@@ -83,14 +88,20 @@ export default function VisitsPage() {
   const handleDailyPay = async () => {
     if (!dailyPayModal) return;
     try {
-      await dailyPay.mutateAsync({
+      const result = await dailyPay.mutateAsync({
         id: dailyPayModal.member._id,
         data: {
-          amount: dailyPayModal.member.subscription?.price || 30000,
+          amount: dailyPayModal.paidAmount,
+          requiredAmount: dailyPayModal.requiredAmount,
           paymentMethod: dailyPayModal.paymentMethod,
         },
       });
-      toast("success", `${dailyPayModal.member.fullName} — bugungi to'lov qayd etildi`);
+      if (result?.debtCreated) {
+        const amt = new Intl.NumberFormat("uz-UZ").format(result.debtAmount) + " so'm";
+        toast("warning", `${dailyPayModal.member.fullName} — to'lov qayd etildi. Qarz: ${amt}`);
+      } else {
+        toast("success", `${dailyPayModal.member.fullName} — bugungi to'lov qayd etildi`);
+      }
       setDailyPayModal(null);
     } catch (err: any) {
       toast("error", err.message || "To'lov qayd etishda xatolik");
@@ -287,7 +298,12 @@ export default function VisitsPage() {
                       </p>
                       {!paid && (
                         <button
-                          onClick={() => setDailyPayModal({ member, paymentMethod: "cash" })}
+                          onClick={() => setDailyPayModal({
+                            member,
+                            requiredAmount: member.subscription?.price || 30000,
+                            paidAmount: member.subscription?.price || 30000,
+                            paymentMethod: "cash",
+                          })}
                           className={cn(
                             "w-full inline-flex items-center justify-center gap-1.5",
                             "px-3 py-1.5 rounded-lg text-xs font-semibold",
@@ -530,17 +546,62 @@ export default function VisitsPage() {
       >
         {dailyPayModal && (
           <div className="space-y-4">
+            {/* A'zo info */}
             <div className="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
               <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-sm font-bold text-amber-700">
                 {getInitials(dailyPayModal.member.fullName)}
               </div>
               <div>
                 <p className="font-semibold text-gray-900">{dailyPayModal.member.fullName}</p>
-                <p className="text-sm text-amber-700 font-medium">
-                  {new Intl.NumberFormat("uz-UZ").format(dailyPayModal.member.subscription?.price || 0)} so&apos;m
-                </p>
+                <p className="text-xs text-gray-500">Kunlik abonement</p>
               </div>
             </div>
+
+            {/* To'lashi kerak */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                To&apos;lashi kerak (so&apos;m)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={new Intl.NumberFormat("uz-UZ").format(dailyPayModal.requiredAmount)}
+                onChange={(e) => {
+                  const num = Number(e.target.value.replace(/\s/g, "").replace(/,/g, "")) || 0;
+                  setDailyPayModal((prev) => prev ? { ...prev, requiredAmount: num } : null);
+                }}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none transition"
+              />
+            </div>
+
+            {/* Hozir to'layapti */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                Hozir to&apos;layapti (so&apos;m)
+              </label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={new Intl.NumberFormat("uz-UZ").format(dailyPayModal.paidAmount)}
+                onChange={(e) => {
+                  const num = Number(e.target.value.replace(/\s/g, "").replace(/,/g, "")) || 0;
+                  setDailyPayModal((prev) => prev ? { ...prev, paidAmount: num } : null);
+                }}
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-400 focus:border-transparent outline-none transition"
+              />
+            </div>
+
+            {/* Qarz ogohlantirish */}
+            {dailyPayModal.paidAmount < dailyPayModal.requiredAmount && dailyPayModal.requiredAmount > 0 && (
+              <div className="flex items-center gap-2 px-3 py-2 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+                <span className="font-semibold">Qarz:</span>
+                <span>
+                  {new Intl.NumberFormat("uz-UZ").format(dailyPayModal.requiredAmount - dailyPayModal.paidAmount)} so&apos;m — qarz daftarchaga yoziladi
+                </span>
+              </div>
+            )}
+
+            {/* To'lov usuli */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1.5">To&apos;lov usuli</label>
               <div className="flex gap-2">

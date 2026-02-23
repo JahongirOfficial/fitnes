@@ -168,7 +168,7 @@ class ApiClient {
     return this.request<any>("/members/bulk-qr", { method: "POST" });
   }
 
-  async dailyPay(id: string, data: { amount: number; paymentMethod: string }) {
+  async dailyPay(id: string, data: { amount: number; requiredAmount?: number; paymentMethod: string }) {
     return this.request<any>(`/members/${id}/daily-pay`, {
       method: "POST",
       body: JSON.stringify(data),

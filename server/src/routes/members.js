@@ -293,7 +293,7 @@ router.post("/:id/qr", verifyToken, async (req, res) => {
 // POST /api/members/:id/daily-pay - Kunlik a'zo bugungi to'lovini qayd etish
 router.post("/:id/daily-pay", verifyToken, async (req, res) => {
   try {
-    const { amount, paymentMethod } = req.body;
+    const { amount, requiredAmount, paymentMethod } = req.body;
 
     const member = await Member.findById(req.params.id);
     if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
@@ -302,22 +302,45 @@ router.post("/:id/daily-pay", verifyToken, async (req, res) => {
       return res.status(400).json({ message: "Bu a'zo kunlik abonementda emas" });
     }
 
+    const subscriptionPrice = requiredAmount ?? member.subscription?.price ?? 30000;
+    const paidAmount = amount ?? subscriptionPrice;
+
     member.dailyPaidDate = new Date();
     await member.save();
 
-    const paidAmount = amount || member.subscription?.price || 30000;
-    await new Payment({
-      memberId: member._id,
-      memberName: member.fullName,
-      type: "income",
-      category: "subscription",
-      amount: paidAmount,
-      paymentMethod: paymentMethod || "cash",
-      description: `Kunlik to'lov`,
-      createdBy: "Kassir",
-    }).save();
+    // To'langan summani to'lovga yozish
+    if (paidAmount > 0) {
+      await new Payment({
+        memberId: member._id,
+        memberName: member.fullName,
+        type: "income",
+        category: "subscription",
+        amount: paidAmount,
+        paymentMethod: paymentMethod || "cash",
+        description: `Kunlik to'lov`,
+        createdBy: "Kassir",
+      }).save();
+    }
 
-    res.json(member);
+    // Agar kamroq to'langan bo'lsa — qarz yaratish
+    if (paidAmount < subscriptionPrice) {
+      const debtAmount = subscriptionPrice - paidAmount;
+      await new Debt({
+        memberId: member._id,
+        personName: member.fullName,
+        phone: member.phone,
+        amount: debtAmount,
+        remainingAmount: debtAmount,
+        description: `Kunlik to'lov yetishmovchiligi`,
+        createdBy: "Kassir",
+      }).save();
+    }
+
+    res.json({
+      member,
+      debtCreated: paidAmount < subscriptionPrice,
+      debtAmount: Math.max(0, subscriptionPrice - paidAmount),
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
