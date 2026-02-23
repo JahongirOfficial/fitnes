@@ -156,9 +156,9 @@ export default function LandingPage() {
               <Image
                 src="/ALIFITSYB.png"
                 alt="ALIFIT"
-                width={44}
-                height={44}
-                className="object-contain drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]"
+                width={28}
+                height={28}
+                className="object-contain shrink-0 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]"
               />
               <span className="text-xl font-black tracking-tight group-hover:text-emerald-400 transition-colors">
                 ALI<span className="text-emerald-400">FIT</span>
@@ -427,11 +427,11 @@ export default function LandingPage() {
                   <p className={cn("text-sm font-medium", plan.popular ? "text-emerald-400" : "text-slate-500")}>{plan.desc}</p>
                 </div>
 
-                <div className="flex items-baseline gap-1 mb-7">
-                  <span className={cn("text-4xl sm:text-5xl font-black", plan.popular ? "text-emerald-400" : "text-white")}>
+                <div className="mb-7">
+                  <div className={cn("text-4xl font-black leading-none mb-1.5", plan.popular ? "text-emerald-400" : "text-white")}>
                     {plan.price}
-                  </span>
-                  <span className="text-slate-500 text-sm ml-1">so&apos;m / {plan.period}</span>
+                  </div>
+                  <div className="text-slate-400 text-sm">so&apos;m / {plan.period}</div>
                 </div>
 
                 <ul className="space-y-3 mb-8 flex-1">
