@@ -83,7 +83,10 @@ function timeAgo(date: string): string {
   if (diffHour < 24) return `${diffHour} soat oldin`;
   const diffDay = Math.floor(diffHour / 24);
   if (diffDay < 7) return `${diffDay} kun oldin`;
-  return d.toLocaleDateString("uz-UZ");
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 }
 
 export default function Header({ collapsed, onMobileMenuToggle }: HeaderProps) {

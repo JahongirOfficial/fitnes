@@ -136,6 +136,10 @@ export default function MemberModal({
       // Format price input - store as number but handle string input
       if (field === "subscriptionPrice") {
         const numValue = typeof value === "string" ? unformatAmount(value) : value;
+        // paidAmount ham yangilansin (agar avval to'liq to'langan bo'lsa)
+        if (prev.paidAmount === prev.subscriptionPrice) {
+          return { ...prev, subscriptionPrice: numValue, paidAmount: numValue };
+        }
         return { ...prev, subscriptionPrice: numValue };
       }
 
@@ -407,13 +411,14 @@ export default function MemberModal({
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  A&apos;zo tarif narxi
+                  A&apos;zo tarif narxi (so&apos;m)
                 </label>
                 <input
                   type="text"
-                  readOnly
+                  inputMode="numeric"
                   value={formatAmountInput(String(form.subscriptionPrice))}
-                  className="w-full px-4 py-2.5 bg-gray-100 border border-gray-200 rounded-xl text-sm outline-none opacity-70 cursor-default"
+                  onChange={(e) => handleChange("subscriptionPrice", e.target.value)}
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
                 />
               </div>
               <div>
