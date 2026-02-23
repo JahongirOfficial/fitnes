@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   Dumbbell,
   Users,
@@ -18,12 +19,14 @@ import {
   Facebook,
   ArrowRight,
   Check,
-  Play,
   Heart,
   Target,
   Flame,
   Menu,
   X,
+  TrendingUp,
+  Award,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -32,33 +35,37 @@ const features = [
   {
     icon: Dumbbell,
     title: "Zamonaviy Jihozlar",
-    description: "Eng so'nggi fitness jihozlari bilan to'liq jihozlangan zal",
-    color: "from-blue-500 to-blue-600",
+    description: "Eng so'nggi fitness jihozlari bilan to'liq jihozlangan, keng va qulay zal.",
+    color: "from-emerald-500 to-teal-500",
+    glow: "shadow-emerald-500/20",
   },
   {
-    icon: Users,
+    icon: Award,
     title: "Professional Trenerlar",
-    description: "Tajribali va sertifikatlangan fitness trenerlari",
-    color: "from-emerald-500 to-emerald-600",
+    description: "Xalqaro sertifikatlangan, tajribali fitness trenerlari har bir qadamda yoningizda.",
+    color: "from-blue-500 to-indigo-500",
+    glow: "shadow-blue-500/20",
   },
   {
     icon: Clock,
     title: "Qulay Ish Vaqti",
-    description: "Ertalab 06:00 dan kechqurun 23:00 gacha ochiq",
-    color: "from-purple-500 to-purple-600",
+    description: "Ertalab 06:00 dan kechqurun 23:00 gacha — sizning jadvalingizga mos.",
+    color: "from-purple-500 to-violet-500",
+    glow: "shadow-purple-500/20",
   },
   {
     icon: Shield,
     title: "Xavfsiz Muhit",
-    description: "Tozalik va xavfsizlik standartlariga mos zal",
-    color: "from-amber-500 to-amber-600",
+    description: "24/7 xavfsizlik kamerasi, tozalik standarti va qulay locker xona.",
+    color: "from-amber-500 to-orange-500",
+    glow: "shadow-amber-500/20",
   },
 ];
 
 const stats = [
-  { value: "500+", label: "A'zolar", icon: Users },
-  { value: "15+", label: "Trenerlar", icon: Trophy },
-  { value: "24/7", label: "Qo'llab-quvvatlash", icon: Zap },
+  { value: "500+", label: "Faol A'zo", icon: Users },
+  { value: "15+", label: "Trener", icon: Trophy },
+  { value: "7", label: "Yil Tajriba", icon: TrendingUp },
   { value: "4.9", label: "Reyting", icon: Star },
 ];
 
@@ -67,14 +74,19 @@ const pricingPlans = [
     name: "Kunlik",
     price: "30,000",
     period: "kun",
-    features: ["Barcha jihozlardan foydalanish", "Dush xonasi", "Shaxsiy shkafcha"],
+    desc: "Sinab ko'rish uchun",
+    features: [
+      "Barcha jihozlardan foydalanish",
+      "Dush xonasi",
+      "Shaxsiy shkafcha",
+    ],
     popular: false,
-    gradient: "from-gray-600 to-gray-700",
   },
   {
     name: "Oylik",
     price: "300,000",
     period: "oy",
+    desc: "Eng mashhur tanlov",
     features: [
       "Barcha jihozlardan foydalanish",
       "Dush xonasi",
@@ -83,12 +95,12 @@ const pricingPlans = [
       "Fitnes dastur tuzish",
     ],
     popular: true,
-    gradient: "from-blue-600 to-indigo-600",
   },
   {
     name: "Yillik",
     price: "2,500,000",
     period: "yil",
+    desc: "Maksimal tejash",
     features: [
       "Barcha jihozlardan foydalanish",
       "Dush xonasi",
@@ -99,7 +111,6 @@ const pricingPlans = [
       "VIP zona kirish",
     ],
     popular: false,
-    gradient: "from-purple-600 to-indigo-600",
   },
 ];
 
@@ -107,21 +118,21 @@ const testimonials = [
   {
     name: "Sardor Azimov",
     role: "6 oylik a'zo",
-    text: "FitnessPro menga hayotimni o'zgartirdi. 3 oyda 15 kg tashladim va o'zimga bo'lgan ishonchim oshdi.",
+    text: "FitnessPro menga hayotimni o'zgartirdi. 3 oyda 15 kg tashladim va o'zimga bo'lgan ishonchim oshdi. Trenerlar juda professional!",
     avatar: "SA",
     rating: 5,
   },
   {
     name: "Dilnoza Karimova",
     role: "1 yillik a'zo",
-    text: "Trenerlar juda professional. Har bir mashg'ulot samarali va qiziqarli o'tadi.",
+    text: "Har bir mashg'ulot samarali va qiziqarli o'tadi. Jihozlar doim toza va tartibli. Eng yaxshi investitsiya — o'z salomatligigizga!",
     avatar: "DK",
     rating: 5,
   },
   {
     name: "Jasur Rahimov",
     role: "3 oylik a'zo",
-    text: "Jihozlar zamonaviy, muhit juda qulay. Ishdan keyin stress chiqarish uchun eng yaxshi joy.",
+    text: "Ishdan keyin stress chiqarish uchun eng yaxshi joy. Muhit juda qulay, odamlar do'stona. Katta tavsiya qilaman!",
     avatar: "JR",
     rating: 5,
   },
@@ -133,33 +144,39 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
+    const handleScroll = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-slate-950 text-white">
+
       {/* ═══════════════ NAVBAR ═══════════════ */}
-      <nav
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-          scrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-sm border-b border-gray-100"
-            : "bg-transparent"
-        )}
-      >
+      <nav className={cn(
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-500",
+        scrolled
+          ? "bg-slate-950/95 backdrop-blur-xl border-b border-white/5 shadow-xl shadow-black/20"
+          : "bg-transparent"
+      )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
+
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/25">
-                <Dumbbell className="w-5 h-5 text-white" strokeWidth={2.5} />
+            <a href="#hero" className="flex items-center gap-3 group">
+              <div className="relative w-10 h-10 flex-shrink-0">
+                <Image
+                  src="/ALIFITSYB.png"
+                  alt="Ali Fitness Logo"
+                  width={40}
+                  height={40}
+                  className="object-contain drop-shadow-[0_0_8px_rgba(52,211,153,0.4)]"
+                />
               </div>
-              <span className={cn("text-xl font-bold transition-colors", scrolled ? "text-gray-900" : "text-white")}>
-                FitnessPro
+              <span className="text-xl font-black tracking-tight text-white group-hover:text-emerald-400 transition-colors">
+                Ali<span className="text-emerald-400">Fitness</span>
               </span>
-            </div>
+            </a>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
@@ -170,43 +187,29 @@ export default function LandingPage() {
                 { label: "Fikrlar", href: "#testimonials" },
                 { label: "Aloqa", href: "#contact" },
               ].map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    "text-sm font-medium transition-colors hover:text-blue-600",
-                    scrolled ? "text-gray-600" : "text-white/80 hover:text-white"
-                  )}
-                >
+                <a key={item.href} href={item.href}
+                  className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors duration-200 relative group">
                   {item.label}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-emerald-400 group-hover:w-full transition-all duration-300" />
                 </a>
               ))}
             </div>
 
             {/* CTA */}
             <div className="hidden md:flex items-center gap-4">
-              <Link
-                href="/login"
-                className={cn(
-                  "text-sm font-medium transition-colors",
-                  scrolled ? "text-gray-700 hover:text-blue-600" : "text-white/90 hover:text-white"
-                )}
-              >
+              <Link href="/login"
+                className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
                 Kirish
               </Link>
-              <Link
-                href="/login"
-                className="px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-sm font-semibold rounded-xl hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5"
-              >
+              <Link href="/login"
+                className="px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-sm font-bold rounded-xl hover:from-emerald-400 hover:to-teal-400 shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5">
                 Boshqaruv Paneli
               </Link>
             </div>
 
             {/* Mobile toggle */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className={cn("md:hidden p-2 rounded-lg", scrolled ? "text-gray-700" : "text-white")}
-            >
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 transition-all">
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
@@ -214,150 +217,195 @@ export default function LandingPage() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 shadow-lg animate-fade-in">
-            <div className="px-4 py-6 space-y-3">
-              {["Bosh sahifa", "Xizmatlar", "Narxlar", "Fikrlar", "Aloqa"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
+          <div className="md:hidden bg-slate-900/98 backdrop-blur-xl border-t border-white/5 animate-fade-in">
+            <div className="px-4 py-6 space-y-1">
+              {[
+                { label: "Bosh sahifa", href: "#hero" },
+                { label: "Xizmatlar", href: "#features" },
+                { label: "Narxlar", href: "#pricing" },
+                { label: "Fikrlar", href: "#testimonials" },
+                { label: "Aloqa", href: "#contact" },
+              ].map((item) => (
+                <a key={item.href} href={item.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-4 py-3 rounded-xl text-gray-700 hover:bg-gray-50 font-medium"
-                >
-                  {item}
+                  className="block px-4 py-3 rounded-xl text-slate-300 hover:bg-white/5 hover:text-emerald-400 font-medium transition-all">
+                  {item.label}
                 </a>
               ))}
-              <Link
-                href="/login"
-                className="block w-full text-center px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold"
-              >
-                Kirish
-              </Link>
+              <div className="pt-3 border-t border-white/5">
+                <Link href="/login" onClick={() => setMobileMenuOpen(false)}
+                  className="block w-full text-center px-4 py-3 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl font-bold">
+                  Kirish
+                </Link>
+              </div>
             </div>
           </div>
         )}
       </nav>
 
       {/* ═══════════════ HERO ═══════════════ */}
-      <section
-        id="hero"
-        className="relative min-h-screen flex items-center overflow-hidden"
-      >
+      <section id="hero" className="relative min-h-screen flex items-center overflow-hidden">
+
         {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC4zIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNncmlkKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950" />
 
-        {/* Decorative circles */}
-        <div className="absolute top-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 left-20 w-[500px] h-[500px] bg-indigo-500/10 rounded-full blur-3xl" />
+        {/* Grid texture */}
+        <div className="absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Cpath d='M60 0v60M0 60h60M0 0h60M0 0v60' stroke='white' stroke-width='0.5'/%3E%3C/svg%3E\")" }} />
 
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-            {/* Text */}
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full mb-8 border border-white/10">
-                <Flame className="w-4 h-4 text-orange-400" />
-                <span className="text-sm text-white/80 font-medium">Toshkentdagi eng yaxshi fitnes zali</span>
+        {/* Glow orbs */}
+        <div className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-emerald-500/8 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-teal-500/6 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-blue-500/4 rounded-full blur-[150px] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+
+            {/* Left — Text */}
+            <div className="animate-fade-in">
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-8">
+                <Sparkles className="w-4 h-4 text-emerald-400" />
+                <span className="text-sm text-emerald-300 font-semibold">Toshkentdagi #1 fitnes zali</span>
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white leading-tight mb-6">
-                Kuchli Bo&apos;l.
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black leading-[1.05] mb-6 tracking-tight">
+                <span className="text-white">KUCHLI.</span>
                 <br />
-                <span className="bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
-                  Sog&apos;lom Bo&apos;l.
+                <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
+                  SOG&apos;LOM.
                 </span>
+                <br />
+                <span className="text-white">ERKIN.</span>
               </h1>
 
-              <p className="text-lg sm:text-xl text-white/70 leading-relaxed mb-10 max-w-xl">
-                Zamonaviy jihozlar, professional trenerlar va qulay muhit bilan
+              <p className="text-lg text-slate-400 leading-relaxed mb-10 max-w-lg">
+                Zamonaviy jihozlar, professional trenerlar va ilhomlantiruvchi muhit bilan
                 fitnes maqsadlaringizga erishing. Bugun boshqacha hayotni boshlang!
               </p>
 
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="#pricing"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-bold text-lg rounded-2xl shadow-2xl shadow-blue-500/30 hover:shadow-blue-500/40 hover:-translate-y-1 transition-all duration-300"
-                >
+              <div className="flex flex-col sm:flex-row gap-4 mb-12">
+                <a href="#pricing"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-base rounded-2xl shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 hover:-translate-y-1 transition-all duration-300">
                   <Zap className="w-5 h-5" />
-                  Hozir Boshlang
+                  Abonement Olish
                 </a>
-                <a
-                  href="#features"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-semibold text-lg rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300"
-                >
-                  <Play className="w-5 h-5" />
+                <a href="#features"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/5 text-white font-semibold text-base rounded-2xl border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-300">
+                  <ArrowRight className="w-5 h-5" />
                   Ko&apos;proq Bilish
                 </a>
               </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-4 gap-4">
+                {stats.map((stat, i) => {
+                  const Icon = stat.icon;
+                  return (
+                    <div key={stat.label} className="text-center"
+                      style={{ animationDelay: `${i * 100}ms` }}>
+                      <p className="text-2xl sm:text-3xl font-black text-white mb-1">{stat.value}</p>
+                      <p className="text-xs text-slate-500 font-medium leading-tight">{stat.label}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 gap-3 sm:gap-4 lg:gap-6">
-              {stats.map((stat, index) => {
-                const Icon = stat.icon;
-                return (
-                  <div
-                    key={stat.label}
-                    className={cn(
-                      "bg-white/10 backdrop-blur-sm border border-white/10 rounded-2xl p-4 sm:p-6 lg:p-8 text-center",
-                      "hover:bg-white/15 transition-all duration-300",
-                      "animate-fade-in"
-                    )}
-                    style={{ animationDelay: `${index * 150}ms` }}
-                  >
-                    <div className="w-10 h-10 lg:w-14 lg:h-14 mx-auto mb-2 lg:mb-4 rounded-xl bg-white/10 flex items-center justify-center">
-                      <Icon className="w-5 h-5 lg:w-7 lg:h-7 text-blue-400" />
-                    </div>
-                    <p className="text-2xl lg:text-4xl font-black text-white mb-1">{stat.value}</p>
-                    <p className="text-xs lg:text-base text-white/60 font-medium">{stat.label}</p>
+            {/* Right — Logo showcase */}
+            <div className="flex items-center justify-center animate-fade-in" style={{ animationDelay: "200ms" }}>
+              <div className="relative">
+                {/* Outer glow ring */}
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-emerald-500/20 to-teal-500/10 blur-3xl scale-125" />
+
+                {/* Inner ring */}
+                <div className="relative w-72 h-72 sm:w-96 sm:h-96 rounded-full border border-emerald-500/20 bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-sm flex items-center justify-center shadow-2xl">
+
+                  {/* Rotating ring */}
+                  <div className="absolute inset-4 rounded-full border border-dashed border-emerald-500/20 animate-spin" style={{ animationDuration: "20s" }} />
+
+                  {/* Logo */}
+                  <div className="relative z-10 flex flex-col items-center gap-4">
+                    <Image
+                      src="/ALIFITSYB.png"
+                      alt="Ali Fitness"
+                      width={160}
+                      height={160}
+                      className="object-contain drop-shadow-[0_0_30px_rgba(52,211,153,0.5)]"
+                    />
                   </div>
-                );
-              })}
+
+                  {/* Decorative dots */}
+                  {[0, 72, 144, 216, 288].map((deg, i) => (
+                    <div key={i}
+                      className="absolute w-2 h-2 rounded-full bg-emerald-400/60"
+                      style={{
+                        top: `${50 - 46 * Math.cos((deg * Math.PI) / 180)}%`,
+                        left: `${50 + 46 * Math.sin((deg * Math.PI) / 180)}%`,
+                        transform: "translate(-50%, -50%)",
+                      }}
+                    />
+                  ))}
+                </div>
+
+                {/* Floating badges */}
+                <div className="absolute -top-4 -right-4 sm:-right-8 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg shadow-emerald-500/40 animate-bounce" style={{ animationDuration: "3s" }}>
+                  <Star className="w-3.5 h-3.5 inline mr-1 fill-white" />
+                  4.9 Reyting
+                </div>
+                <div className="absolute -bottom-4 -left-4 sm:-left-8 bg-slate-800 border border-white/10 text-white text-xs font-bold px-3 py-2 rounded-xl shadow-lg">
+                  <Users className="w-3.5 h-3.5 inline mr-1 text-emerald-400" />
+                  500+ A&apos;zo
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <div className="w-8 h-12 rounded-full border-2 border-white/30 flex items-start justify-center p-2">
-            <div className="w-1.5 h-3 bg-white/50 rounded-full animate-pulse" />
+          <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-1.5">
+            <div className="w-1 h-2.5 bg-emerald-400/70 rounded-full" />
           </div>
         </div>
       </section>
 
       {/* ═══════════════ FEATURES ═══════════════ */}
-      <section id="features" className="py-12 sm:py-24 bg-gray-50">
+      <section id="features" className="py-16 sm:py-28 bg-slate-900 relative overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-gradient-to-b from-transparent to-emerald-500/30" />
+
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-full text-sm font-semibold mb-4">
+          <div className="text-center mb-12 sm:mb-20">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-sm font-semibold mb-5">
               <Target className="w-4 h-4" />
               Nega Biz?
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-              Nima Uchun FitnessPro?
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-5 tracking-tight">
+              Nima Uchun <span className="text-emerald-400">AliFitness?</span>
             </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Biz sizga eng yaxshi fitness tajribasini taqdim etamiz
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Biz sizga faqat sport zaliga kirishdan ko'proq narsani taqdim etamiz
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (
-                <div
-                  key={feature.title}
-                  className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-100 group"
-                >
-                  <div
-                    className={cn(
-                      "w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300",
-                      feature.color
-                    )}
-                  >
+                <div key={feature.title}
+                  className="group relative p-6 sm:p-8 bg-white/[0.03] border border-white/[0.07] rounded-2xl hover:bg-white/[0.06] hover:border-emerald-500/30 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
+                  style={{ animationDelay: `${index * 100}ms` }}>
+                  <div className={cn(
+                    "w-14 h-14 rounded-2xl bg-gradient-to-br flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300",
+                    feature.color, feature.glow
+                  )}>
                     <Icon className="w-7 h-7 text-white" />
                   </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-3">{feature.title}</h3>
-                  <p className="text-gray-500 leading-relaxed">{feature.description}</p>
+                  <h3 className="text-lg font-bold text-white mb-3">{feature.title}</h3>
+                  <p className="text-slate-400 leading-relaxed text-sm">{feature.description}</p>
+
+                  {/* Bottom accent line */}
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-emerald-500/0 to-transparent group-hover:via-emerald-500/50 rounded-b-2xl transition-all duration-300" />
                 </div>
               );
             })}
@@ -365,72 +413,83 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ═══════════════ DIVIDER ═══════════════ */}
+      <div className="relative h-px bg-gradient-to-r from-transparent via-emerald-500/30 to-transparent" />
+
       {/* ═══════════════ PRICING ═══════════════ */}
-      <section id="pricing" className="py-12 sm:py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-50 text-emerald-600 rounded-full text-sm font-semibold mb-4">
+      <section id="pricing" className="py-16 sm:py-28 bg-slate-950 relative overflow-hidden">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12 sm:mb-20">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full text-sm font-semibold mb-5">
               <Star className="w-4 h-4" />
               Narxlar
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-              O&apos;zingizga Mos Rejani Tanlang
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-5 tracking-tight">
+              O&apos;zingizga Mos <span className="text-emerald-400">Rejani</span> Tanlang
             </h2>
-            <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-              Har bir byudjetga mos, sifatli xizmat
+            <p className="text-lg text-slate-400 max-w-2xl mx-auto">
+              Har bir byudjetga mos, maksimal sifat
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
             {pricingPlans.map((plan) => (
-              <div
-                key={plan.name}
+              <div key={plan.name}
                 className={cn(
-                  "relative rounded-3xl p-6 sm:p-8 transition-all duration-300",
+                  "relative rounded-3xl p-7 sm:p-8 transition-all duration-300 flex flex-col",
                   plan.popular
-                    ? "bg-gradient-to-br from-blue-600 to-indigo-700 text-white shadow-2xl shadow-blue-500/30 scale-105 border-0"
-                    : "bg-white border-2 border-gray-100 hover:border-blue-200 hover:shadow-xl"
-                )}
-              >
+                    ? "bg-gradient-to-b from-emerald-500/20 to-teal-500/10 border-2 border-emerald-500/50 shadow-2xl shadow-emerald-500/20 scale-105"
+                    : "bg-slate-800/50 border border-white/8 hover:border-white/20 hover:bg-slate-800/80"
+                )}>
+
                 {plan.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 bg-gradient-to-r from-amber-400 to-orange-400 rounded-full text-xs font-bold text-white shadow-lg">
-                    Eng mashhur
+                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                    <div className="flex items-center gap-1.5 px-4 py-1.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full text-xs font-bold text-white shadow-lg shadow-emerald-500/40">
+                      <Flame className="w-3.5 h-3.5" />
+                      Eng mashhur
+                    </div>
                   </div>
                 )}
-                <h3 className={cn("text-xl font-bold mb-2", plan.popular ? "text-white" : "text-gray-900")}>
-                  {plan.name}
-                </h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className={cn("text-4xl font-black", plan.popular ? "text-white" : "text-gray-900")}>
+
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold text-white mb-1">{plan.name}</h3>
+                  <p className={cn("text-sm", plan.popular ? "text-emerald-400" : "text-slate-500")}>
+                    {plan.desc}
+                  </p>
+                </div>
+
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className={cn("text-4xl sm:text-5xl font-black", plan.popular ? "text-emerald-400" : "text-white")}>
                     {plan.price}
                   </span>
-                  <span className={cn("text-sm", plan.popular ? "text-white/70" : "text-gray-500")}>
-                    so&apos;m / {plan.period}
-                  </span>
+                  <span className="text-slate-500 text-sm ml-1">so&apos;m / {plan.period}</span>
                 </div>
-                <ul className="space-y-3 mb-8">
+
+                <ul className="space-y-3 mb-8 flex-1">
                   {plan.features.map((f) => (
-                    <li key={f} className="flex items-center gap-3">
-                      <Check
-                        className={cn("w-5 h-5 shrink-0", plan.popular ? "text-emerald-300" : "text-emerald-500")}
-                      />
-                      <span className={cn("text-sm", plan.popular ? "text-white/90" : "text-gray-600")}>
-                        {f}
-                      </span>
+                    <li key={f} className="flex items-start gap-3">
+                      <div className={cn(
+                        "w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
+                        plan.popular ? "bg-emerald-500/20" : "bg-white/8"
+                      )}>
+                        <Check className={cn("w-3 h-3", plan.popular ? "text-emerald-400" : "text-slate-400")} />
+                      </div>
+                      <span className="text-sm text-slate-300">{f}</span>
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="#contact"
+
+                <a href="#contact"
                   className={cn(
-                    "block w-full text-center py-3.5 rounded-xl font-semibold text-sm transition-all duration-300",
+                    "flex items-center justify-center gap-2 w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-300",
                     plan.popular
-                      ? "bg-white text-blue-600 hover:bg-blue-50 shadow-lg"
-                      : "bg-gray-900 text-white hover:bg-gray-800"
-                  )}
-                >
+                      ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400 shadow-lg shadow-emerald-500/30 hover:-translate-y-0.5"
+                      : "bg-white/8 text-white hover:bg-white/15 border border-white/10"
+                  )}>
                   Tanlash
-                  <ArrowRight className="inline w-4 h-4 ml-1" />
+                  <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
             ))}
@@ -439,37 +498,43 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════ TESTIMONIALS ═══════════════ */}
-      <section id="testimonials" className="py-12 sm:py-24 bg-gray-50">
+      <section id="testimonials" className="py-16 sm:py-28 bg-slate-900 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 sm:mb-16">
-            <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-50 text-purple-600 rounded-full text-sm font-semibold mb-4">
+          <div className="text-center mb-12 sm:mb-20">
+            <span className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/10 border border-purple-500/20 text-purple-400 rounded-full text-sm font-semibold mb-5">
               <Heart className="w-4 h-4" />
               Fikrlar
             </span>
-            <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-              A&apos;zolarimiz Nima Deydi?
+            <h2 className="text-3xl sm:text-5xl font-black text-white mb-5 tracking-tight">
+              A&apos;zolarimiz <span className="text-emerald-400">Nima Deydi?</span>
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 lg:gap-8">
             {testimonials.map((t, i) => (
-              <div
-                key={t.name}
-                className="bg-white rounded-2xl p-5 sm:p-8 shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100"
-              >
+              <div key={t.name}
+                className="relative p-7 sm:p-8 bg-white/[0.03] border border-white/[0.07] rounded-2xl hover:bg-white/[0.06] hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1 group">
+
+                {/* Quote mark */}
+                <div className="text-6xl font-black text-emerald-500/20 leading-none mb-4 font-serif group-hover:text-emerald-500/30 transition-colors">
+                  &ldquo;
+                </div>
+
                 <div className="flex items-center gap-1 mb-4">
                   {Array.from({ length: t.rating }).map((_, j) => (
                     <Star key={j} className="w-4 h-4 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-gray-600 leading-relaxed mb-6">&ldquo;{t.text}&rdquo;</p>
-                <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">{t.avatar}</span>
+
+                <p className="text-slate-300 leading-relaxed mb-8 text-sm sm:text-base">{t.text}</p>
+
+                <div className="flex items-center gap-3 pt-5 border-t border-white/[0.07]">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/30">
+                    <span className="text-sm font-black text-white">{t.avatar}</span>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{t.name}</p>
-                    <p className="text-sm text-gray-500">{t.role}</p>
+                    <p className="font-bold text-white">{t.name}</p>
+                    <p className="text-sm text-slate-500">{t.role}</p>
                   </div>
                 </div>
               </div>
@@ -479,28 +544,32 @@ export default function LandingPage() {
       </section>
 
       {/* ═══════════════ CTA BANNER ═══════════════ */}
-      <section className="py-12 sm:py-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMC4zIiBzdHJva2Utb3BhY2l0eT0iMC4wNSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3QgZmlsbD0idXJsKCNncmlkKSIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIvPjwvc3ZnPg==')] opacity-30" />
+      <section className="py-14 sm:py-24 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-600 via-teal-600 to-cyan-600" />
+        <div className="absolute inset-0 bg-[url(\"data:image/svg+xml,%3Csvg width='60' height='60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h60v60H0z' fill='none'/%3E%3Cpath d='M60 0v60M0 60h60' stroke='white' stroke-width='0.3' stroke-opacity='0.15'/%3E%3C/svg%3E\")] opacity-40" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
+
         <div className="relative max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-            O&apos;zgarishni Bugun Boshlang!
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-sm font-bold text-white mb-6 border border-white/30">
+            <Zap className="w-4 h-4" />
+            Maxsus taklif
+          </div>
+          <h2 className="text-3xl sm:text-5xl font-black text-white mb-5 tracking-tight">
+            Birinchi Mashg&apos;ulot <br />
+            <span className="text-white/90">Mutlaqo BEPUL!</span>
           </h2>
-          <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-            Birinchi mashg&apos;ulotingiz bepul! Bizga tashrif buyuring va fitnes
-            yo&apos;lingizni boshlang.
+          <p className="text-lg sm:text-xl text-white/80 mb-10 max-w-2xl mx-auto">
+            Bugun bizga tashrif buyuring, professional trener bilan bepul mashg&apos;ulot o&apos;ting
+            va o&apos;z salomatligigizga birinchi qadamni qo&apos;ying.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a
-              href="tel:+998712001020"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white text-blue-600 font-bold rounded-2xl shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300"
-            >
+            <a href="tel:+998712001020"
+              className="inline-flex items-center gap-2.5 px-8 py-4 bg-white text-emerald-600 font-black rounded-2xl shadow-2xl hover:shadow-white/20 hover:-translate-y-1 transition-all duration-300 text-base">
               <Phone className="w-5 h-5" />
               Qo&apos;ng&apos;iroq Qilish
             </a>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white font-bold rounded-2xl border border-white/20 hover:bg-white/20 transition-all duration-300"
-            >
+            <Link href="/login"
+              className="inline-flex items-center gap-2.5 px-8 py-4 bg-white/15 backdrop-blur-sm text-white font-bold rounded-2xl border border-white/30 hover:bg-white/25 transition-all duration-300 text-base">
               <ArrowRight className="w-5 h-5" />
               Admin Paneli
             </Link>
@@ -508,73 +577,78 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ═══════════════ CONTACT / FOOTER ═══════════════ */}
-      <footer id="contact" className="bg-slate-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-10 lg:gap-12">
+      {/* ═══════════════ FOOTER ═══════════════ */}
+      <footer id="contact" className="bg-black border-t border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 sm:gap-12">
+
             {/* Brand */}
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-                  <Dumbbell className="w-5 h-5 text-white" strokeWidth={2.5} />
-                </div>
-                <span className="text-xl font-bold">FitnessPro</span>
+            <div className="lg:col-span-2">
+              <div className="flex items-center gap-3 mb-5">
+                <Image src="/ALIFITSYB.png" alt="Ali Fitness" width={40} height={40}
+                  className="object-contain" />
+                <span className="text-xl font-black text-white">
+                  Ali<span className="text-emerald-400">Fitness</span>
+                </span>
               </div>
-              <p className="text-slate-400 leading-relaxed max-w-md mb-6">
+              <p className="text-slate-400 leading-relaxed max-w-sm mb-6 text-sm">
                 Toshkentdagi eng zamonaviy fitnes zali. Professional xizmat,
-                sifatli jihozlar va qulay muhit bilan sizni kutmoqdamiz.
+                sifatli jihozlar va ilhomlantiruvchi muhit bilan sizni kutmoqdamiz.
               </p>
               <div className="flex gap-3">
-                <a href="#" className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                  <Instagram className="w-5 h-5" />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                  <Facebook className="w-5 h-5" />
-                </a>
-                <a href="#" className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all">
-                  <Phone className="w-5 h-5" />
-                </a>
+                {[
+                  { icon: Instagram, href: "#" },
+                  { icon: Facebook, href: "#" },
+                  { icon: Phone, href: "tel:+998712001020" },
+                ].map(({ icon: Icon, href }, i) => (
+                  <a key={i} href={href}
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:bg-emerald-500/20 hover:border-emerald-500/40 hover:text-emerald-400 transition-all">
+                    <Icon className="w-5 h-5" />
+                  </a>
+                ))}
               </div>
             </div>
 
-            {/* Contact Info */}
+            {/* Contact */}
             <div>
-              <h3 className="font-bold text-lg mb-4">Bog&apos;lanish</h3>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-3 text-slate-400">
-                  <MapPin className="w-5 h-5 text-blue-400 shrink-0" />
-                  <span>Toshkent sh., Chilonzor tumani, 7-mavze</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-400">
-                  <Phone className="w-5 h-5 text-blue-400 shrink-0" />
-                  <span>+998 71 200 10 20</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-400">
-                  <Mail className="w-5 h-5 text-blue-400 shrink-0" />
-                  <span>info@fitnesspro.uz</span>
-                </li>
-                <li className="flex items-center gap-3 text-slate-400">
-                  <Clock className="w-5 h-5 text-blue-400 shrink-0" />
-                  <span>06:00 - 23:00 (har kuni)</span>
-                </li>
+              <h3 className="font-bold text-white mb-5">Bog&apos;lanish</h3>
+              <ul className="space-y-4">
+                {[
+                  { icon: MapPin, text: "Toshkent sh., Chilonzor tumani, 7-mavze" },
+                  { icon: Phone, text: "+998 71 200 10 20" },
+                  { icon: Mail, text: "info@alifitness.uz" },
+                  { icon: Clock, text: "06:00 – 23:00 (har kuni)" },
+                ].map(({ icon: Icon, text }, i) => (
+                  <li key={i} className="flex items-start gap-3 text-slate-400 text-sm">
+                    <Icon className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>{text}</span>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Quick Links */}
+            {/* Links */}
             <div>
-              <h3 className="font-bold text-lg mb-4">Tezkor Havolalar</h3>
+              <h3 className="font-bold text-white mb-5">Tezkor Havolalar</h3>
               <ul className="space-y-3">
-                {["Bosh sahifa", "Xizmatlar", "Narxlar", "Fikrlar"].map((link) => (
-                  <li key={link}>
-                    <a href="#" className="text-slate-400 hover:text-white transition-colors flex items-center gap-2">
-                      <ChevronRight className="w-4 h-4" />
-                      {link}
+                {[
+                  { label: "Bosh sahifa", href: "#hero" },
+                  { label: "Xizmatlar", href: "#features" },
+                  { label: "Narxlar", href: "#pricing" },
+                  { label: "Fikrlar", href: "#testimonials" },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <a href={link.href}
+                      className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-2 text-sm group">
+                      <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                      {link.label}
                     </a>
                   </li>
                 ))}
                 <li>
-                  <Link href="/login" className="text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-2">
-                    <ChevronRight className="w-4 h-4" />
+                  <Link href="/login"
+                    className="text-emerald-400 hover:text-emerald-300 transition-colors flex items-center gap-2 text-sm font-semibold group">
+                    <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                     Admin Panel
                   </Link>
                 </li>
@@ -583,14 +657,14 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-slate-800">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-slate-500 text-sm">
-              &copy; 2026 FitnessPro. Barcha huquqlar himoyalangan.
+        {/* Bottom */}
+        <div className="border-t border-white/[0.05]">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <p className="text-slate-600 text-sm">
+              &copy; 2026 AliFitness. Barcha huquqlar himoyalangan.
             </p>
-            <p className="text-slate-600 text-xs">
-              Powered by FitnessPro CRM
+            <p className="text-slate-700 text-xs">
+              Powered by AliFitness CRM
             </p>
           </div>
         </div>
