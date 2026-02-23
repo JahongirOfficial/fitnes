@@ -59,6 +59,11 @@ router.post("/checkin", verifyToken, async (req, res) => {
     const member = await Member.findById(memberId);
     if (!member) return res.status(404).json({ message: "A'zo topilmadi" });
 
+    // Nofaol a'zoni darhol rad etish
+    if (member.status === "inactive") {
+      return res.status(400).json({ message: "Nofaol a'zo. Avval abonementni faollashtiring" });
+    }
+
     // Kunlik a'zoni bugungi to'lov tekshiruvi
     if (member.subscription?.type === "daily") {
       const today = new Date();
@@ -125,11 +130,6 @@ router.post("/checkin", verifyToken, async (req, res) => {
           "subscription.status": "expired",
         });
       }
-    }
-
-    // Nofaol a'zoni rad etish (barcha inactive a'zolar bloklanadi)
-    if (member.status === "inactive") {
-      return res.status(400).json({ message: "Nofaol a'zo. Avval abonementni faollashtiring" });
     }
 
     // Check if already checked in today
