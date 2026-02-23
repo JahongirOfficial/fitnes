@@ -276,7 +276,7 @@ export function useBulkGenerateQR() {
 export function useDailyPay() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { amount: number; paymentMethod: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { amount: number; requiredAmount?: number; paymentMethod: string } }) =>
       api.dailyPay(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["members"] });
