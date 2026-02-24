@@ -27,7 +27,6 @@ import {
   formatCurrency,
   formatDate,
   formatTime,
-  getPaymentMethodText,
 } from "@/lib/utils";
 import { CategoryIcon } from "@/lib/categoryIcons";
 
@@ -63,13 +62,6 @@ function getMovementTypeBadge(type: string): { color: string; text: string } {
     default:
       return { color: "bg-gray-100 text-gray-700", text: type };
   }
-}
-
-/** Sotuvdan miqdorni ajratib olish (description: "Name x5 sotildi") */
-function parseQuantityFromDescription(description?: string): number {
-  if (!description) return 1;
-  const match = description.match(/x(\d+)/);
-  return match ? Number(match[1]) : 1;
 }
 
 // ---- Skeleton komponentlar ------------------------------------------------
@@ -125,10 +117,9 @@ function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number })
 
 // ---- Tab tiplari -----------------------------------------------------------
 
-type TabType = "sales" | "stock" | "info";
+type TabType = "stock" | "info";
 
 const TABS: { key: TabType; label: string; icon: React.ElementType }[] = [
-  { key: "sales", label: "Sotuvlar", icon: ShoppingBag },
   { key: "stock", label: "Zaxira tarixi", icon: History },
   { key: "info", label: "Ma'lumotlar", icon: Info },
 ];
@@ -140,14 +131,13 @@ export default function ProductDetailPage() {
   const router = useRouter();
   const id = params.id as string;
 
-  const [activeTab, setActiveTab] = useState<TabType>("sales");
+  const [activeTab, setActiveTab] = useState<TabType>("stock");
 
   // Ma'lumotlarni yuklash
   const { data, isLoading } = useProductHistory(id);
 
   // Ma'lumotlarni ajratib olish
   const product = data?.product;
-  const sales = data?.sales || [];
   const stockMovements = data?.stockMovements || [];
   const stats = data?.stats || {
     totalSold: 0,
@@ -400,7 +390,6 @@ export default function ProductDetailPage() {
 
         {/* Tab kontent */}
         <div className="p-4 sm:p-6">
-          {activeTab === "sales" && <SalesTab sales={sales} />}
           {activeTab === "stock" && <StockTab stockMovements={stockMovements} />}
           {activeTab === "info" && <InfoTab product={product} />}
         </div>
@@ -409,85 +398,7 @@ export default function ProductDetailPage() {
   );
 }
 
-// ---- Tab 1: Sotuvlar -------------------------------------------------------
-
-interface SalesTabProps {
-  sales: any[];
-}
-
-function SalesTab({ sales }: SalesTabProps) {
-  if (sales.length === 0) {
-    return (
-      <div className="flex flex-col items-center py-12 text-center">
-        <ShoppingBag className="mb-3 h-10 w-10 text-gray-300" />
-        <p className="text-sm font-medium text-gray-500">Sotuvlar yo&apos;q</p>
-        <p className="mt-1 text-xs text-gray-400">Bu mahsulot hali sotilmagan</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Sana
-            </th>
-            <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              A&apos;zo
-            </th>
-            <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Miqdor
-            </th>
-            <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              Summa
-            </th>
-            <th className="whitespace-nowrap pb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-              To&apos;lov usuli
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {sales.map((sale: any) => {
-            const qty = parseQuantityFromDescription(sale.description);
-            return (
-              <tr key={sale._id} className="transition-colors hover:bg-gray-50">
-                <td className="whitespace-nowrap py-3 pr-4 text-sm text-gray-600">
-                  <div>{formatDate(sale.createdAt)}</div>
-                  <div className="text-xs text-gray-400">{formatTime(sale.createdAt)}</div>
-                </td>
-                <td className="whitespace-nowrap py-3 pr-4 text-sm">
-                  {sale.memberName ? (
-                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-700">
-                      <User className="h-3.5 w-3.5 text-gray-400" />
-                      {sale.memberName}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400">Mehmon</span>
-                  )}
-                </td>
-                <td className="whitespace-nowrap py-3 pr-4 text-sm">
-                  <span className="inline-flex items-center rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                    {qty} dona
-                  </span>
-                </td>
-                <td className="whitespace-nowrap py-3 pr-4 text-sm font-semibold text-emerald-600">
-                  +{formatCurrency(sale.amount)}
-                </td>
-                <td className="whitespace-nowrap py-3 text-sm text-gray-600">
-                  {getPaymentMethodText(sale.paymentMethod)}
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
-// ---- Tab 2: Zaxira tarixi --------------------------------------------------
+// ---- Tab: Zaxira tarixi --------------------------------------------------
 
 interface StockTabProps {
   stockMovements: any[];
@@ -520,6 +431,9 @@ function StockTab({ stockMovements }: StockTabProps) {
             </th>
             <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
               Qoldiq
+            </th>
+            <th className="whitespace-nowrap pb-3 pr-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+              Kimga
             </th>
             <th className="whitespace-nowrap pb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
               Izoh
@@ -566,6 +480,16 @@ function StockTab({ stockMovements }: StockTabProps) {
                   <span className="text-gray-400">{movement.previousStock}</span>
                   <span className="mx-1.5 text-gray-300">&rarr;</span>
                   <span className="font-medium text-gray-700">{movement.newStock}</span>
+                </td>
+                <td className="whitespace-nowrap py-3 pr-4 text-sm">
+                  {movement.type === "sale" && movement.memberName ? (
+                    <span className="inline-flex items-center gap-1.5 font-medium text-gray-700">
+                      <User className="h-3.5 w-3.5 text-gray-400" />
+                      {movement.memberName}
+                    </span>
+                  ) : (
+                    <Minus className="inline h-4 w-4 text-gray-300" />
+                  )}
                 </td>
                 <td className="py-3 text-sm text-gray-500">
                   {movement.description || <Minus className="inline h-4 w-4 text-gray-300" />}

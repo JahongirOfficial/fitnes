@@ -8,7 +8,7 @@ import { cn, formatCurrency } from "@/lib/utils";
 interface DebtPaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: { amount: number; description?: string }) => Promise<void>;
+  onSubmit: (data: { amount: number; description?: string; paymentMethod: string }) => Promise<void>;
   debt: any;
 }
 
@@ -21,6 +21,7 @@ export default function DebtPaymentModal({
   const [isLoading, setIsLoading] = useState(false);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
 
   // Qoldiq summani hisoblash
   const totalAmount = debt?.amount || 0;
@@ -36,6 +37,7 @@ export default function DebtPaymentModal({
       const remaining = debt.remainingAmount ?? (debt.amount - (debt.paidAmount || 0));
       setAmount(String(remaining));
       setDescription("");
+      setPaymentMethod("cash");
     }
   }, [isOpen, debt]);
 
@@ -47,6 +49,7 @@ export default function DebtPaymentModal({
       await onSubmit({
         amount: Number(amount),
         description: description.trim() || undefined,
+        paymentMethod,
       });
       onClose();
     } catch {
@@ -152,6 +155,34 @@ export default function DebtPaymentModal({
               Summa qoldiq miqdordan ({formatCurrency(remainingAmount)}) oshmasligi kerak
             </p>
           )}
+        </div>
+
+        {/* To'lov turi */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">
+            To&apos;lov turi
+          </label>
+          <div className="flex gap-2">
+            {[
+              { value: "cash", label: "Naqd" },
+              { value: "card", label: "Karta" },
+              { value: "transfer", label: "O'tkazma" },
+            ].map((m) => (
+              <button
+                key={m.value}
+                type="button"
+                onClick={() => setPaymentMethod(m.value)}
+                className={cn(
+                  "flex-1 px-3 py-2.5 rounded-xl text-sm font-medium transition-all border",
+                  paymentMethod === m.value
+                    ? "border-emerald-600 bg-emerald-50 text-emerald-700"
+                    : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
+                )}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Izoh */}

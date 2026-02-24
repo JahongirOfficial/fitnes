@@ -355,7 +355,7 @@ class ApiClient {
     });
   }
 
-  async payDebt(id: string, data: { amount: number; description?: string }) {
+  async payDebt(id: string, data: { amount: number; description?: string; paymentMethod: string }) {
     return this.request<any>(`/debts/${id}/pay`, {
       method: "POST",
       body: JSON.stringify(data),

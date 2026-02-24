@@ -143,7 +143,7 @@ export default function DebtsPage() {
     }
   };
 
-  const handlePay = async (payData: { amount: number; description?: string }) => {
+  const handlePay = async (payData: { amount: number; description?: string; paymentMethod: string }) => {
     try {
       await payDebt.mutateAsync({ id: paymentDebt._id, data: payData });
       toast("success", "To'lov qayd etildi");
