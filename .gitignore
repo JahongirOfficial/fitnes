@@ -37,6 +37,11 @@ yarn-error.log*
 server/node_modules
 server/.env
 
+# telegram-bot
+telegram-bot/node_modules
+telegram-bot/package-lock.json
+telegram-bot/data.json
+
 # claude
 .claude/
 
