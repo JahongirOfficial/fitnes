@@ -27,38 +27,23 @@ function saveData(data) {
 
 // ─── Bot ─────────────────────────────────────────────────────────────────────
 
-const bot = new TelegramBot(TOKEN, { polling: false });
-
-let pollingActive = false;
-let restartTimer = null;
-
-function scheduleRestart(delayMs = 8000) {
-  if (restartTimer) clearTimeout(restartTimer);
-  restartTimer = setTimeout(() => {
-    restartTimer = null;
-    startPolling();
-  }, delayMs);
-}
-
-function startPolling() {
-  if (pollingActive) return;
-  pollingActive = true;
-  bot.startPolling().catch((err) => {
-    console.error("startPolling xatolik:", err.message);
-    pollingActive = false;
-    scheduleRestart(10000);
-  });
-}
-
-startPolling();
-
 process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err.message);
 });
-
 process.on("unhandledRejection", (reason) => {
   console.error("Unhandled rejection:", reason);
 });
+
+// polling: true — kutubxona o'zi qayta urinadi (409 uchun ham)
+const bot = new TelegramBot(TOKEN, { polling: true });
+
+// EFATAL bo'lganda polling to'xtaydi — qayta ishga tushuramiz
+function restartPolling() {
+  bot.startPolling().catch((err) => {
+    console.error("restartPolling xatolik:", err.message);
+    setTimeout(restartPolling, 10000);
+  });
+}
 
 // Foydalanuvchi holatlari
 const states = {};
@@ -484,14 +469,11 @@ bot.on("polling_error", (err) => {
   const code = err.code || "";
   console.error("Polling xatolik:", code, err.message);
 
-  if (code === "EFATAL" || code === "ETELEGRAM") {
-    pollingActive = false;
-    // 409 uchun uzoqroq kutish — Telegram eski sessionni tozalashi uchun
-    const delay = err.message && err.message.includes("409") ? 30000 : 8000;
-    console.log(`${code} — ${delay / 1000}s dan keyin qayta ulaniladi...`);
-    bot.stopPolling().catch(() => {}).finally(() => {
-      scheduleRestart(delay);
-    });
+  // Faqat EFATAL polling ni to'xtatadi — qayta ishga tushiramiz
+  // ETELEGRAM (409 va boshqalar) — kutubxona o'zi qayta urinadi
+  if (code === "EFATAL") {
+    console.log("EFATAL — 10s dan keyin polling qayta boshlanadi...");
+    setTimeout(restartPolling, 10000);
   }
 });
 
