@@ -410,6 +410,27 @@ export default function MemberModal({
               />
             </div>
           </div>
+
+          {/* Aksiya banneri — quarterly va mart 19 gacha */}
+          {form.subscriptionType === "quarterly" && new Date() <= new Date("2026-03-19") && (
+            <div className="mt-3 flex items-start gap-3 px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl">
+              <span className="text-lg leading-none mt-0.5">🎉</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-orange-700">19-mart 2026 gacha aksiya!</p>
+                <p className="text-xs text-orange-600 mt-0.5">
+                  3 oylik bir yo'la to'lov —{" "}
+                  <span className="font-bold">
+                    {new Intl.NumberFormat("uz-UZ").format(
+                      Math.max(0, settingsPrices.monthly * 3 - settingsPrices.quarterly)
+                    )}{" "}
+                    so&apos;m tejaysiz
+                  </span>{" "}
+                  (3 × oylik narxiga nisbatan)
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Narx bo'limi — create modeda tarif narxi + to'lov summasi, edit/view da oddiy narx */}
           {mode === "create" ? (
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
