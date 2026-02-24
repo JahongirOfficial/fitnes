@@ -147,11 +147,10 @@ router.post("/", verifyToken, async (req, res) => {
         // Balansni to'ldirish
         await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
 
-        // Mavjud balans qarzlarini avtomatik to'lash
+        // Mavjud qarzlarni avtomatik to'lash (barcha unpaid/partial qarzlar)
         const unpaidDebts = await Debt.find({
           memberId,
           status: { $in: ["unpaid", "partial"] },
-          description: /balans/i,
         }).sort({ createdAt: 1 });
 
         if (unpaidDebts.length > 0) {
