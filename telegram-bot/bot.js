@@ -56,6 +56,10 @@ process.on("uncaughtException", (err) => {
   console.error("Uncaught exception:", err.message);
 });
 
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled rejection:", reason);
+});
+
 // Foydalanuvchi holatlari
 const states = {};
 
@@ -471,6 +475,10 @@ bot.on("callback_query", async (query) => {
 });
 
 // ─── Xato handler ─────────────────────────────────────────────────────────────
+
+bot.on("error", (err) => {
+  console.error("Bot error:", err.message);
+});
 
 bot.on("polling_error", (err) => {
   const code = err.code || "";
