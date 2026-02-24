@@ -469,11 +469,16 @@ bot.on("polling_error", (err) => {
   const code = err.code || "";
   console.error("Polling xatolik:", code, err.message);
 
-  // Faqat EFATAL polling ni to'xtatadi — qayta ishga tushiramiz
-  // ETELEGRAM (409 va boshqalar) — kutubxona o'zi qayta urinadi
   if (code === "EFATAL") {
+    // EFATAL: polling to'xtadi, qayta ishga tushiramiz
     console.log("EFATAL — 10s dan keyin polling qayta boshlanadi...");
     setTimeout(restartPolling, 10000);
+  } else if (code === "ETELEGRAM" && err.message.includes("409")) {
+    // 409: eski sessiya hali aktiv — to'xtatib, 35s kutib qayta boshlaymiz
+    console.log("409 Conflict — 35s dan keyin qayta ulaniladi...");
+    bot.stopPolling().catch(() => {}).finally(() => {
+      setTimeout(restartPolling, 35000);
+    });
   }
 });
 
