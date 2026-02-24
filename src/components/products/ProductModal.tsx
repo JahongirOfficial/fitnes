@@ -1,9 +1,15 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Loader2, Save, Plus, Upload, X, ImageIcon } from "lucide-react";
+import { Loader2, Save, Plus, Upload, X, Trash2 } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api";
+
+interface RecipeItem {
+  ingredientId: string;
+  quantity: string;
+}
 
 interface ProductModalProps {
   isOpen: boolean;
@@ -36,6 +42,24 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Recipe state (for cocktails)
+  const [recipe, setRecipe] = useState<RecipeItem[]>([]);
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+
+  // Load all products for ingredient selector
+  useEffect(() => {
+    if (!isOpen) return;
+    const loadProducts = async () => {
+      try {
+        const data = await api.getProducts({});
+        setAllProducts(data.products || []);
+      } catch {
+        /* ignore */
+      }
+    };
+    loadProducts();
+  }, [isOpen]);
+
   useEffect(() => {
     if (product && mode === "edit") {
       setForm({
@@ -53,11 +77,21 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
       }
       setImageFile(null);
       setRemoveImage(false);
+      // Load recipe
+      if (product.recipe && product.recipe.length > 0) {
+        setRecipe(product.recipe.map((r: any) => ({
+          ingredientId: r.ingredientId || "",
+          quantity: String(r.quantity || ""),
+        })));
+      } else {
+        setRecipe([]);
+      }
     } else {
       setForm({ name: "", category: "drink", price: "", costPrice: "", stockQuantity: "", minStockAlert: "5" });
       setImageFile(null);
       setImagePreview(null);
       setRemoveImage(false);
+      setRecipe([]);
     }
   }, [product, mode, isOpen]);
 
@@ -85,6 +119,20 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const addRecipeItem = () => {
+    setRecipe((prev) => [...prev, { ingredientId: "", quantity: "" }]);
+  };
+
+  const updateRecipeItem = (index: number, field: keyof RecipeItem, value: string) => {
+    setRecipe((prev) => prev.map((item, i) => i === index ? { ...item, [field]: value } : item));
+  };
+
+  const removeRecipeItem = (index: number) => {
+    setRecipe((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const isCocktail = form.category === "cocktail";
+
   const handleSubmit = async () => {
     if (!form.name.trim() || !form.price) return;
     setIsLoading(true);
@@ -94,8 +142,18 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
       formData.append("category", form.category);
       formData.append("price", form.price);
       formData.append("costPrice", form.costPrice || "0");
-      formData.append("stockQuantity", form.stockQuantity || "0");
+      formData.append("stockQuantity", isCocktail ? "0" : (form.stockQuantity || "0"));
       formData.append("minStockAlert", form.minStockAlert || "5");
+
+      if (isCocktail) {
+        const validRecipe = recipe.filter((r) => r.ingredientId && r.quantity);
+        formData.append("recipe", JSON.stringify(validRecipe.map((r) => ({
+          ingredientId: r.ingredientId,
+          quantity: Number(r.quantity),
+        }))));
+      } else {
+        formData.append("recipe", JSON.stringify([]));
+      }
 
       if (imageFile) {
         formData.append("image", imageFile);
@@ -111,6 +169,11 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
       setIsLoading(false);
     }
   };
+
+  // Ingredients available for selection (exclude the current product if editing)
+  const ingredientOptions = allProducts.filter(
+    (p) => p._id !== product?._id && p._id !== product?.id
+  );
 
   return (
     <Modal
@@ -154,7 +217,7 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
           {imagePreview ? (
             <div className="relative w-full h-48 rounded-xl overflow-hidden border border-gray-200 bg-gray-50">
               <img
-                src={imagePreview.startsWith("data:") || imagePreview.startsWith("blob:") ? imagePreview : imagePreview}
+                src={imagePreview}
                 alt="Preview"
                 className="w-full h-full object-contain"
               />
@@ -210,7 +273,11 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Kategoriya</label>
           <select
             value={form.category}
-            onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+            onChange={(e) => {
+              const cat = e.target.value;
+              setForm((p) => ({ ...p, category: cat }));
+              if (cat !== "cocktail") setRecipe([]);
+            }}
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
           >
             {categories.map((c) => (
@@ -242,28 +309,92 @@ export default function ProductModal({ isOpen, onClose, onSubmit, product, mode 
             />
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Qoldiq</label>
-            <input
-              type="number"
-              value={form.stockQuantity}
-              onChange={(e) => setForm((p) => ({ ...p, stockQuantity: e.target.value }))}
-              placeholder="0"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+
+        {/* Stock fields — hidden for cocktails (retseptdan hisoblanadi) */}
+        {!isCocktail && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Qoldiq</label>
+              <input
+                type="number"
+                value={form.stockQuantity}
+                onChange={(e) => setForm((p) => ({ ...p, stockQuantity: e.target.value }))}
+                placeholder="0"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Min qoldiq</label>
+              <input
+                type="number"
+                value={form.minStockAlert}
+                onChange={(e) => setForm((p) => ({ ...p, minStockAlert: e.target.value }))}
+                placeholder="5"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Min qoldiq</label>
-            <input
-              type="number"
-              value={form.minStockAlert}
-              onChange={(e) => setForm((p) => ({ ...p, minStockAlert: e.target.value }))}
-              placeholder="5"
-              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
-            />
+        )}
+
+        {/* Recipe section — only for cocktails */}
+        {isCocktail && (
+          <div className="pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-900">Retsept (ingredientlar)</h3>
+              <button
+                type="button"
+                onClick={addRecipeItem}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition"
+              >
+                <Plus size={14} />
+                Ingredient qo&apos;shish
+              </button>
+            </div>
+            {recipe.length === 0 ? (
+              <p className="text-xs text-gray-400 text-center py-4 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                Hozircha ingredient yo&apos;q. Qo&apos;shish tugmasini bosing.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {recipe.map((item, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <select
+                      value={item.ingredientId}
+                      onChange={(e) => updateRecipeItem(index, "ingredientId", e.target.value)}
+                      className="flex-1 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    >
+                      <option value="">Ingredient tanlang</option>
+                      {ingredientOptions.map((p) => (
+                        <option key={p._id || p.id} value={p._id || p.id}>
+                          {p.name} (qoldiq: {p.stockQuantity})
+                        </option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      value={item.quantity}
+                      onChange={(e) => updateRecipeItem(index, "quantity", e.target.value)}
+                      placeholder="Miqdor"
+                      className="w-24 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => removeRecipeItem(index)}
+                      className="w-9 h-9 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition shrink-0"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                ))}
+                <p className="text-xs text-gray-400 mt-1">
+                  Miqdor = 1 ta kokteyl uchun kerakli miqdor (litr, dona va h.k.)
+                </p>
+              </div>
+            )}
           </div>
-        </div>
+        )}
       </div>
     </Modal>
   );

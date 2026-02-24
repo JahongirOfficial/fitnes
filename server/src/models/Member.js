@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 
 const subscriptionSchema = new mongoose.Schema({
-  type: { type: String, enum: ["daily", "monthly", "yearly"], required: true },
+  type: { type: String, enum: ["daily", "monthly", "quarterly", "yearly"], required: true },
   startDate: { type: Date, required: true },
   endDate: { type: Date, required: true },
   price: { type: Number, required: true },

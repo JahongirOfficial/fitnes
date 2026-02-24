@@ -32,7 +32,7 @@ router.get("/", verifyToken, async (req, res) => {
     if (search) filter.name = { $regex: search, $options: "i" };
     if (category && category !== "all") filter.category = category;
 
-    const products = await Product.find(filter).sort({ name: 1 });
+    const products = await Product.find(filter).sort({ name: 1 }).populate("recipe.ingredientId", "name stockQuantity");
 
     const stats = {
       totalProducts: await Product.countDocuments(),
@@ -56,6 +56,7 @@ router.post("/", verifyToken, uploadProductImage.single("image"), async (req, re
       costPrice: Number(req.body.costPrice) || 0,
       stockQuantity: Number(req.body.stockQuantity) || 0,
       minStockAlert: Number(req.body.minStockAlert) || 5,
+      recipe: req.body.recipe ? JSON.parse(req.body.recipe) : [],
     };
 
     if (req.file) {
@@ -98,6 +99,7 @@ router.put("/:id", verifyToken, uploadProductImage.single("image"), async (req, 
       costPrice: Number(req.body.costPrice) || 0,
       stockQuantity: Number(req.body.stockQuantity) || 0,
       minStockAlert: Number(req.body.minStockAlert) || 5,
+      recipe: req.body.recipe ? JSON.parse(req.body.recipe) : [],
     };
 
     if (req.file) {
@@ -278,7 +280,18 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
     const product = await Product.findById(req.params.id);
     if (!product) return res.status(404).json({ message: "Mahsulot topilmadi" });
 
-    if (product.stockQuantity < quantity) {
+    // Kokteyl retsepti bo'lsa — ingredientlarni tekshirish
+    const hasRecipe = product.recipe && product.recipe.length > 0;
+    if (hasRecipe) {
+      for (const item of product.recipe) {
+        const ingredient = await Product.findById(item.ingredientId);
+        const needed = item.quantity * quantity;
+        if (!ingredient || ingredient.stockQuantity < needed) {
+          const ingName = ingredient?.name || "Ingredient";
+          return res.status(400).json({ message: `${ingName} yetarli emas (kerak: ${needed}, mavjud: ${ingredient?.stockQuantity ?? 0})` });
+        }
+      }
+    } else if (product.stockQuantity < quantity) {
       return res.status(400).json({ message: "Yetarli mahsulot yo'q" });
     }
 
@@ -323,22 +336,45 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
       }
     }
 
-    const previousStock = product.stockQuantity;
-    product.stockQuantity -= quantity;
-    await product.save();
+    if (hasRecipe) {
+      // Kokteyl: ingredientlardan kamaytirish
+      for (const item of product.recipe) {
+        const ingredient = await Product.findById(item.ingredientId);
+        const needed = item.quantity * quantity;
+        const prevIngStock = ingredient.stockQuantity;
+        const newIngStock = prevIngStock - needed;
+        await Product.findByIdAndUpdate(item.ingredientId, { $inc: { stockQuantity: -needed } });
+        await new StockMovement({
+          productId: item.ingredientId,
+          type: "sale",
+          quantity: -needed,
+          previousStock: prevIngStock,
+          newStock: newIngStock,
+          description: `${ingredient.name} — ${product.name} x${quantity} uchun ishlatildi`,
+          memberId: memberId || undefined,
+          memberName: memberName || undefined,
+          createdBy: "Kassir",
+        }).save();
+      }
+      // Kokteylning o'z stocki o'zgarmaydi
+    } else {
+      const previousStock = product.stockQuantity;
+      product.stockQuantity -= quantity;
+      await product.save();
 
-    // StockMovement qayd
-    await new StockMovement({
-      productId: product._id,
-      type: "sale",
-      quantity: -quantity,
-      previousStock,
-      newStock: product.stockQuantity,
-      description: `${product.name} x${quantity} sotildi`,
-      memberId: memberId || undefined,
-      memberName: memberName || undefined,
-      createdBy: "Kassir",
-    }).save();
+      // StockMovement qayd
+      await new StockMovement({
+        productId: product._id,
+        type: "sale",
+        quantity: -quantity,
+        previousStock,
+        newStock: product.stockQuantity,
+        description: `${product.name} x${quantity} sotildi`,
+        memberId: memberId || undefined,
+        memberName: memberName || undefined,
+        createdBy: "Kassir",
+      }).save();
+    }
 
     // Payment yaratish (productId bilan)
     const payment = new Payment({

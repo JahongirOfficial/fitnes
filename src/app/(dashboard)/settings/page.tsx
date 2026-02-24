@@ -40,7 +40,7 @@ export default function SettingsPage() {
   const [gymSettings, setGymSettings] = useState({
     gymName: "ALIFIT Gym", address: "Toshkent sh., Chilonzor tumani",
     phone: "+998712345678", workingHours: "06:00 - 23:00",
-    dailyPrice: "30000", monthlyPrice: "300000", yearlyPrice: "2500000",
+    dailyPrice: "30000", monthlyPrice: "300000", quarterlyPrice: "800000", yearlyPrice: "2500000",
   });
 
   const [notifications, setNotifications] = useState({
@@ -69,6 +69,7 @@ export default function SettingsPage() {
         workingHours: settingsData.workingHours || "06:00 - 23:00",
         dailyPrice: String(settingsData.pricing?.daily || 30000),
         monthlyPrice: String(settingsData.pricing?.monthly || 300000),
+        quarterlyPrice: String(settingsData.pricing?.quarterly || 800000),
         yearlyPrice: String(settingsData.pricing?.yearly || 2500000),
       });
       if (settingsData.notifications) {
@@ -92,7 +93,7 @@ export default function SettingsPage() {
     try {
       await api.updateSettings({
         gymName: gymSettings.gymName, address: gymSettings.address, phone: gymSettings.phone, workingHours: gymSettings.workingHours,
-        pricing: { daily: Number(gymSettings.dailyPrice), monthly: Number(gymSettings.monthlyPrice), yearly: Number(gymSettings.yearlyPrice) },
+        pricing: { daily: Number(gymSettings.dailyPrice), monthly: Number(gymSettings.monthlyPrice), quarterly: Number(gymSettings.quarterlyPrice), yearly: Number(gymSettings.yearlyPrice) },
       });
       toast("success", "Zal sozlamalari saqlandi");
     } catch (err: any) {
@@ -250,7 +251,7 @@ export default function SettingsPage() {
                 </div>
               </div>
               <h3 className="text-md font-semibold text-gray-900 mt-8 mb-4">Abonement Narxlari</h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="bg-blue-50 rounded-xl p-4 sm:p-5 border border-blue-100">
                   <p className="text-sm text-blue-600 font-medium mb-2">Kunlik</p>
                   <input type="number" value={gymSettings.dailyPrice}
@@ -263,6 +264,13 @@ export default function SettingsPage() {
                   <input type="number" value={gymSettings.monthlyPrice}
                     onChange={(e) => setGymSettings((p) => ({ ...p, monthlyPrice: e.target.value }))}
                     className="w-full px-4 py-2.5 bg-white border border-emerald-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none transition text-lg font-semibold" />
+                  <p className="text-xs text-gray-500 mt-1">so&apos;m</p>
+                </div>
+                <div className="bg-orange-50 rounded-xl p-4 sm:p-5 border border-orange-100">
+                  <p className="text-sm text-orange-600 font-medium mb-2">3 Oylik</p>
+                  <input type="number" value={gymSettings.quarterlyPrice}
+                    onChange={(e) => setGymSettings((p) => ({ ...p, quarterlyPrice: e.target.value }))}
+                    className="w-full px-4 py-2.5 bg-white border border-orange-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none transition text-lg font-semibold" />
                   <p className="text-xs text-gray-500 mt-1">so&apos;m</p>
                 </div>
                 <div className="bg-purple-50 rounded-xl p-4 sm:p-5 border border-purple-100">

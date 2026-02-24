@@ -13,6 +13,12 @@ const productSchema = new mongoose.Schema(
     stockQuantity: { type: Number, required: true, default: 0 },
     minStockAlert: { type: Number, default: 5 },
     image: { type: String, default: null },
+    recipe: [
+      {
+        ingredientId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
+        quantity: { type: Number, required: true },
+      },
+    ],
   },
   { timestamps: true }
 );

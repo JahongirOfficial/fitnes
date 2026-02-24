@@ -11,7 +11,7 @@ export interface User {
 }
 
 export type MemberStatus = "active" | "inactive" | "expired";
-export type SubscriptionType = "daily" | "monthly" | "yearly";
+export type SubscriptionType = "daily" | "monthly" | "quarterly" | "yearly";
 export type PaymentMethod = "cash" | "card" | "transfer" | "balance";
 export type PaymentType = "income" | "expense";
 export type ProductCategory = "drink" | "chocolate" | "cocktail" | "yogurt";
@@ -42,8 +42,14 @@ export interface Subscription {
   status: "active" | "expired";
 }
 
+export interface RecipeItem {
+  ingredientId: string;
+  quantity: number;
+}
+
 export interface Product {
   id: string;
+  _id?: string;
   name: string;
   category: ProductCategory;
   price: number;
@@ -51,6 +57,7 @@ export interface Product {
   stockQuantity: number;
   minStockAlert: number;
   image?: string | null;
+  recipe?: RecipeItem[];
 }
 
 export interface Visit {

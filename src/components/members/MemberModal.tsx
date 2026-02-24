@@ -32,6 +32,7 @@ interface MemberModalProps {
 const defaultPrices: Record<string, number> = {
   daily: 30000,
   monthly: 300000,
+  quarterly: 800000,
   yearly: 2500000,
 };
 
@@ -40,6 +41,7 @@ function calculateEndDate(startDate: string, type: string): string {
   const date = new Date(startDate);
   if (type === "daily") date.setDate(date.getDate() + 1);
   else if (type === "monthly") date.setMonth(date.getMonth() + 1);
+  else if (type === "quarterly") date.setMonth(date.getMonth() + 3);
   else if (type === "yearly") date.setFullYear(date.getFullYear() + 1);
   return date.toISOString().split("T")[0];
 }
@@ -77,6 +79,7 @@ export default function MemberModal({
           setSettingsPrices({
             daily: settings.pricing.daily || 30000,
             monthly: settings.pricing.monthly || 300000,
+            quarterly: settings.pricing.quarterly || 800000,
             yearly: settings.pricing.yearly || 2500000,
           });
         }
@@ -377,6 +380,7 @@ export default function MemberModal({
               >
                 <option value="daily">Kunlik</option>
                 <option value="monthly">Oylik</option>
+                <option value="quarterly">3 Oylik</option>
                 <option value="yearly">Yillik</option>
               </select>
             </div>

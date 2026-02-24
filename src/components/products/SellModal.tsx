@@ -41,7 +41,8 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
   const [selectedMember, setSelectedMember] = useState<MemberOption | null>(null);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const maxStock = product?.stockQuantity ?? product?.stock ?? 0;
+  const isCocktail = product?.recipe && product.recipe.length > 0;
+  const maxStock = isCocktail ? 9999 : (product?.stockQuantity ?? product?.stock ?? 0);
   const totalPrice = (product?.price || 0) * quantity;
 
   // Reset on open
@@ -79,7 +80,8 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
   }, [memberSearch, showDropdown, searchMembers]);
 
   const handleSubmit = async () => {
-    if (quantity < 1 || quantity > maxStock) return;
+    if (quantity < 1) return;
+    if (!isCocktail && quantity > maxStock) return;
     setIsLoading(true);
     try {
       await onSubmit({
@@ -110,7 +112,7 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
             Bekor qilish
           </button>
           <button onClick={handleSubmit}
-            disabled={isLoading || !selectedMember || quantity < 1 || quantity > maxStock}
+            disabled={isLoading || !selectedMember || quantity < 1 || (!isCocktail && quantity > maxStock)}
             className={cn("inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all",
               "bg-blue-600 hover:bg-blue-700", "disabled:opacity-50 disabled:cursor-not-allowed")}>
             {isLoading ? <Loader2 size={16} className="animate-spin" /> : <ShoppingBag size={16} />}
@@ -120,10 +122,40 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
       }>
       <div className="space-y-4">
         {product && (
-          <div className="p-4 bg-gray-50 rounded-xl text-center">
-            <p className="font-semibold text-gray-900 text-lg">{product.name}</p>
-            <p className="text-blue-600 font-bold text-xl mt-1">{formatPrice(product.price)}</p>
-            <p className="text-xs text-gray-500 mt-1">Qoldiq: {maxStock} ta</p>
+          <div className="p-4 bg-gray-50 rounded-xl">
+            <div className="text-center">
+              <p className="font-semibold text-gray-900 text-lg">{product.name}</p>
+              <p className="text-blue-600 font-bold text-xl mt-1">{formatPrice(product.price)}</p>
+              {!isCocktail && (
+                <p className="text-xs text-gray-500 mt-1">Qoldiq: {maxStock} ta</p>
+              )}
+            </div>
+            {isCocktail && product.recipe && product.recipe.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-gray-200">
+                <p className="text-xs font-semibold text-gray-600 mb-2">Tarkib (1 ta kokteyl uchun):</p>
+                <div className="space-y-1">
+                  {product.recipe.map((item: any, idx: number) => {
+                    const ing = item.ingredientId;
+                    const ingName = typeof ing === "object" ? ing?.name : ing;
+                    const ingStock = typeof ing === "object" ? ing?.stockQuantity : null;
+                    const needed = item.quantity * quantity;
+                    const isLow = ingStock !== null && ingStock < needed;
+                    return (
+                      <div key={idx} className={cn(
+                        "flex justify-between items-center text-xs px-2 py-1 rounded-lg",
+                        isLow ? "bg-red-50 text-red-700" : "bg-white text-gray-600"
+                      )}>
+                        <span>{ingName}</span>
+                        <span className={isLow ? "font-semibold" : ""}>
+                          {item.quantity} × {quantity} = {needed}
+                          {ingStock !== null && ` (mavjud: ${ingStock})`}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -206,8 +238,8 @@ export default function SellModal({ isOpen, onClose, onSubmit, product }: SellMo
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Miqdor</label>
-          <input type="number" min={1} max={maxStock} value={quantity}
-            onChange={(e) => setQuantity(Math.min(Number(e.target.value), maxStock))}
+          <input type="number" min={1} max={isCocktail ? undefined : maxStock} value={quantity}
+            onChange={(e) => setQuantity(isCocktail ? Math.max(1, Number(e.target.value)) : Math.min(Number(e.target.value), maxStock))}
             className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition" />
         </div>
 

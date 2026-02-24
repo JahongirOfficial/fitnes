@@ -9,6 +9,7 @@ const settingsSchema = new mongoose.Schema(
     pricing: {
       daily: { type: Number, default: 30000 },
       monthly: { type: Number, default: 300000 },
+      quarterly: { type: Number, default: 800000 },
       yearly: { type: Number, default: 2500000 },
     },
     notifications: {

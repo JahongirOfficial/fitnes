@@ -129,7 +129,7 @@ router.post("/", verifyToken, async (req, res) => {
     const subscriptionPrice = member.subscription?.price || 0;
     const paidAmount = paidAmountInput ?? subscriptionPrice;
     if (paidAmount > 0) {
-      const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
+      const subLabels = { daily: "Kunlik", monthly: "Oylik", quarterly: "3 Oylik", yearly: "Yillik" };
       const subLabel = subLabels[member.subscription?.type] || member.subscription?.type;
       await new Payment({
         memberId: member._id,
@@ -218,7 +218,7 @@ router.put("/:id/activate", verifyToken, async (req, res) => {
     await member.save();
 
     // To'lov yaratish
-    const subLabels = { daily: "Kunlik", monthly: "Oylik", yearly: "Yillik" };
+    const subLabels = { daily: "Kunlik", monthly: "Oylik", quarterly: "3 Oylik", yearly: "Yillik" };
     const subLabel = subLabels[subscriptionType] || subscriptionType;
     await new Payment({
       memberId: member._id,
