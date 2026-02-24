@@ -350,7 +350,7 @@ export function useUpdateDebt() {
 export function usePayDebt() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: { amount: number; description?: string } }) =>
+    mutationFn: ({ id, data }: { id: string; data: { amount: number; description?: string; paymentMethod: string } }) =>
       api.payDebt(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["debts"] }),
   });
