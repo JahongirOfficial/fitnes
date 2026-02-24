@@ -6,6 +6,7 @@ const iconMap: Record<string, { Icon: any; bg: string; color: string }> = {
   chocolate: { Icon: Candy, bg: "bg-amber-100", color: "text-amber-600" },
   cocktail: { Icon: CupSoda, bg: "bg-purple-100", color: "text-purple-600" },
   yogurt: { Icon: IceCreamCone, bg: "bg-pink-100", color: "text-pink-600" },
+  other: { Icon: Package, bg: "bg-gray-100", color: "text-gray-600" },
 };
 
 interface CategoryIconProps {

@@ -39,6 +39,7 @@ const categoryLabels: Record<string, string> = {
   chocolate: "Shokolad",
   cocktail: "Kokteyl",
   yogurt: "Yogurt",
+  other: "Boshqa",
 };
 
 /** Kategoriya badge ranglari */
@@ -47,6 +48,7 @@ const categoryBadgeColors: Record<string, string> = {
   chocolate: "bg-amber-100 text-amber-700",
   cocktail: "bg-purple-100 text-purple-700",
   yogurt: "bg-pink-100 text-pink-700",
+  other: "bg-gray-100 text-gray-700",
 };
 
 /** Zaxira harakat turi badge */

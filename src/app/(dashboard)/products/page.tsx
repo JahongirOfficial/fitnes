@@ -24,7 +24,7 @@ import ProductModal from "@/components/products/ProductModal";
 import SellModal from "@/components/products/SellModal";
 import RestockModal from "@/components/products/RestockModal";
 
-type Category = "all" | "drink" | "chocolate" | "cocktail" | "yogurt";
+type Category = "all" | "drink" | "chocolate" | "cocktail" | "yogurt" | "other";
 
 const categoryLabels: Record<string, string> = {
   all: "Barchasi",
@@ -32,6 +32,7 @@ const categoryLabels: Record<string, string> = {
   chocolate: "Shokoladlar",
   cocktail: "Kokteylar",
   yogurt: "Yogurtlar",
+  other: "Boshqa",
 };
 
 function formatPrice(amount: number): string {
@@ -245,6 +246,7 @@ export default function ProductsPage() {
               chocolate: "bg-amber-100 text-amber-700",
               cocktail: "bg-purple-100 text-purple-700",
               yogurt: "bg-pink-100 text-pink-700",
+              other: "bg-gray-100 text-gray-700",
             };
             return (
               <div

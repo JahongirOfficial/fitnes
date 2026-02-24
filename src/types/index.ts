@@ -14,7 +14,7 @@ export type MemberStatus = "active" | "inactive" | "expired";
 export type SubscriptionType = "daily" | "monthly" | "quarterly" | "yearly";
 export type PaymentMethod = "cash" | "card" | "transfer" | "balance";
 export type PaymentType = "income" | "expense";
-export type ProductCategory = "drink" | "chocolate" | "cocktail" | "yogurt";
+export type ProductCategory = "drink" | "chocolate" | "cocktail" | "yogurt" | "other";
 
 export interface Member {
   id: string;

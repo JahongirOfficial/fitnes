@@ -24,6 +24,7 @@ const categories = [
   { value: "chocolate", label: "Shokolad" },
   { value: "cocktail", label: "Kokteyl" },
   { value: "yogurt", label: "Yogurt" },
+  { value: "other", label: "Boshqa" },
 ];
 
 export default function ProductModal({ isOpen, onClose, onSubmit, product, mode }: ProductModalProps) {
