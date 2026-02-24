@@ -11,6 +11,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "ALIFIT CRM - Fitnes Zali Boshqaruv Tizimi",
   description: "Fitnes zali uchun to'liq boshqaruv tizimi - a'zolar, to'lovlar, mahsulotlar va hisobotlar",
+  icons: {
+    icon: "/ALIFITSYB.png",
+    apple: "/ALIFITSYB.png",
+  },
 };
 
 export default function RootLayout({

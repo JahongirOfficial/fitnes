@@ -377,18 +377,22 @@ router.post("/:id/sell", verifyToken, async (req, res) => {
     }
 
     // Payment yaratish (productId bilan)
-    const payment = new Payment({
-      memberId,
-      memberName,
-      productId: product._id,
-      type: "income",
-      category: "product",
-      amount: product.price * quantity,
-      paymentMethod,
-      description: `${product.name} x${quantity} sotildi`,
-      createdBy: "Kassir",
-    });
-    await payment.save();
+    // Balans orqali to'lov bo'lsa kirim yozilmaydi — balans to'ldirilganda allaqachon kirim bo'lgan
+    let payment = null;
+    if (paymentMethod !== "balance") {
+      payment = new Payment({
+        memberId,
+        memberName,
+        productId: product._id,
+        type: "income",
+        category: "product",
+        amount: product.price * quantity,
+        paymentMethod,
+        description: `${product.name} x${quantity} sotildi`,
+        createdBy: "Kassir",
+      });
+      await payment.save();
+    }
 
     // Kam qoldiq bildirishnomasi
     if (product.stockQuantity <= 5 && product.stockQuantity > 0) {

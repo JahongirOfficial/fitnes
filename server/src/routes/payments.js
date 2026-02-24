@@ -146,6 +146,34 @@ router.post("/", verifyToken, async (req, res) => {
       } else if (paymentMethod !== "balance") {
         // Balansni to'ldirish
         await Member.findByIdAndUpdate(memberId, { $inc: { balance: amount } });
+
+        // Mavjud balans qarzlarini avtomatik to'lash
+        const unpaidDebts = await Debt.find({
+          memberId,
+          status: { $in: ["unpaid", "partial"] },
+          description: /balans/i,
+        }).sort({ createdAt: 1 });
+
+        if (unpaidDebts.length > 0) {
+          let memberAfter = await Member.findById(memberId);
+          let available = memberAfter.balance || 0;
+
+          for (const debt of unpaidDebts) {
+            if (available <= 0) break;
+            const toPay = Math.min(available, debt.remainingAmount);
+            debt.remainingAmount -= toPay;
+            debt.paidAmount = (debt.paidAmount || 0) + toPay;
+            debt.status = debt.remainingAmount <= 0 ? "paid" : "partial";
+            await debt.save();
+            available -= toPay;
+          }
+
+          // Qarzga sarflangan summani balansdan ayirish
+          const usedForDebt = (memberAfter.balance || 0) - available;
+          if (usedForDebt > 0) {
+            await Member.findByIdAndUpdate(memberId, { $inc: { balance: -usedForDebt } });
+          }
+        }
       }
     }
 

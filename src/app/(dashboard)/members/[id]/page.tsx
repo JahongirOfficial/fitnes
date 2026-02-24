@@ -352,7 +352,7 @@ export default function MemberProfilePage() {
       </div>
 
       {/* ────── Statistika kartalar ────── */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
         {/* Balans */}
         <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="flex items-center gap-3">
@@ -438,34 +438,6 @@ export default function MemberProfilePage() {
           </div>
         </div>
 
-        {/* Qarzlar */}
-        <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div
-              className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl",
-                totalOutstanding > 0 ? "bg-red-100" : "bg-emerald-100"
-              )}
-            >
-              <AlertTriangle
-                className={cn(
-                  "h-5 w-5",
-                  totalOutstanding > 0 ? "text-red-600" : "text-emerald-600"
-                )}
-              />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500">Qarzlar</p>
-              {debtsLoading ? (
-                <div className="h-5 w-12 animate-pulse rounded bg-gray-200" />
-              ) : totalOutstanding > 0 ? (
-                <p className="text-lg font-bold text-red-600">{formatCurrency(totalOutstanding)}</p>
-              ) : (
-                <p className="text-lg font-bold text-emerald-600">Qarz yo&apos;q</p>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* ────── Tablar ────── */}
