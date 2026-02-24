@@ -29,14 +29,32 @@ function saveData(data) {
 
 const bot = new TelegramBot(TOKEN, { polling: false });
 
+let pollingActive = false;
+let restartTimer = null;
+
+function scheduleRestart(delayMs = 8000) {
+  if (restartTimer) clearTimeout(restartTimer);
+  restartTimer = setTimeout(() => {
+    restartTimer = null;
+    startPolling();
+  }, delayMs);
+}
+
 function startPolling() {
-  bot.startPolling({ restart: true }).catch((err) => {
+  if (pollingActive) return;
+  pollingActive = true;
+  bot.startPolling().catch((err) => {
     console.error("startPolling xatolik:", err.message);
-    setTimeout(startPolling, 7000);
+    pollingActive = false;
+    scheduleRestart(10000);
   });
 }
 
 startPolling();
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught exception:", err.message);
+});
 
 // Foydalanuvchi holatlari
 const states = {};
@@ -455,11 +473,16 @@ bot.on("callback_query", async (query) => {
 // ─── Xato handler ─────────────────────────────────────────────────────────────
 
 bot.on("polling_error", (err) => {
-  console.error("Polling xatolik:", err.code || "", err.message);
-  if (err.code === "EFATAL") {
-    console.log("EFATAL — 7 sekunddan keyin qayta ulaniladi...");
+  const code = err.code || "";
+  console.error("Polling xatolik:", code, err.message);
+
+  if (code === "EFATAL" || code === "ETELEGRAM") {
+    pollingActive = false;
+    // 409 uchun uzoqroq kutish — Telegram eski sessionni tozalashi uchun
+    const delay = err.message && err.message.includes("409") ? 30000 : 8000;
+    console.log(`${code} — ${delay / 1000}s dan keyin qayta ulaniladi...`);
     bot.stopPolling().catch(() => {}).finally(() => {
-      setTimeout(startPolling, 7000);
+      scheduleRestart(delay);
     });
   }
 });
