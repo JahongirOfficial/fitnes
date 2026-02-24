@@ -144,14 +144,12 @@ async function showProducts(chatId) {
 
   const categories = Object.entries(grouped);
 
-  // Sarlavha xabari
   await bot.sendMessage(
     chatId,
     `📦 *Mahsulotlar ro'yxati* — jami *${data.products.length} ta*`,
     { parse_mode: "Markdown" }
   );
 
-  // Har bir kategoriyani alohida xabar sifatida yuborish
   for (let i = 0; i < categories.length; i++) {
     const [cat, prods] = categories[i];
     let text = `📁 *${cat}* — ${prods.length} ta\n\n`;
@@ -383,7 +381,6 @@ bot.on("callback_query", async (query) => {
       });
     }
 
-    // 4096 limitdan oshmasligi uchun split qilamiz
     const LIMIT = 3800;
     let text = `📁 *${cat}* — ${prods.length} ta mahsulot:\n\n`;
     for (let i = 0; i < prods.length; i++) {
