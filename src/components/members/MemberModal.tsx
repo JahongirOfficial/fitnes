@@ -413,12 +413,12 @@ export default function MemberModal({
             </div>
           </div>
 
-          {/* Aksiya banneri — quarterly va mart 19 gacha */}
-          {form.subscriptionType === "quarterly" && new Date() <= new Date("2026-03-19") && (
+          {/* Aksiya banneri — quarterly va 2026 gacha */}
+          {form.subscriptionType === "quarterly" && new Date() <= new Date("2026-12-31") && (
             <div className="mt-3 flex items-start gap-3 px-4 py-3 bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-xl">
               <span className="text-lg leading-none mt-0.5">🎉</span>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-orange-700">19-mart 2026 gacha aksiya!</p>
+                <p className="text-sm font-semibold text-orange-700">2026-yil oxirigacha aksiya!</p>
                 <p className="text-xs text-orange-600 mt-0.5">
                   3 oylik bir yo'la to'lov —{" "}
                   <span className="font-bold">
