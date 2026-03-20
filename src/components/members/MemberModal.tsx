@@ -380,9 +380,7 @@ export default function MemberModal({
               >
                 <option value="daily">Kunlik</option>
                 <option value="monthly">Oylik</option>
-                {(new Date() <= new Date("2026-03-19") || form.subscriptionType === "quarterly") && (
-                  <option value="quarterly">3 Oylik</option>
-                )}
+                <option value="quarterly">3 Oylik</option>
                 <option value="yearly">Yillik</option>
               </select>
             </div>
